@@ -46,4 +46,4 @@ gage = {**grizzly, **cpf, **disdrom, **coag, **other, **new_usgs}
 #gage = {**grizzly, **cpf, **disdrom, **coag, **other}
 
 # get list of keys (lat/lon)
-coord = [i for i in ga
+coord = [i for i in gage.keys()]
