@@ -58,6 +58,8 @@ def get_cpf(data_folder):
     cpf = [cpf[i].iloc[(cpf[i].index.year<=2022) & (cpf[i].index.year>=2021)&
                    (cpf[i].index.month>=4) & (cpf[i].index.month<11)] for i in range(len(gage_raw))]
 
+    cpf.index = cpf.index+np.timedelta64(1, 'h') # shift hour bc time in MST
+
     coord = zip(gage_location.Latitude,gage_location.Longitude)
     cpf = dict(zip(coord, cpf))
 

@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 #from mrms_gage import gage_storm
 
 def get_coagmet(data_folder):
@@ -45,6 +46,8 @@ def get_coagmet(data_folder):
 
     gage_raw = [gage_raw[i].iloc[(gage_raw[i].index.year<=2022) & (gage_raw[i].index.year>=2021)&
                 (gage_raw[i].index.month>=4) & (gage_raw[i].index.month<11)] for i in range(len(gage_raw))]
+
+    gage_raw.index = gage_raw.index+np.timedelta64(1, 'h') # shift hour bc time in MST
 
     coord = zip(lat,lon)
 
