@@ -122,7 +122,7 @@ compare['total_accum_atgage']=[np.sum(compare.mrms_accum_atgage[i]) for i in ran
 compare['total_gage_accum']=[np.sum(compare.gage_accum[i]) for i in range(len(compare))]
 
 # save window values
-out = compare.loc[(compare.total_accum_atgage>1)|(compare.total_gage_accum>1)]
+out = compare.loc[(compare.total_accum_atgage>0)|(compare.total_gage_accum>0)]
 out.reset_index().to_feather('output//window_values')
 
 #####################################################################################################################   REMOVE SAMPLES WHERE NOTHING HAPPENING FOR MRMS
