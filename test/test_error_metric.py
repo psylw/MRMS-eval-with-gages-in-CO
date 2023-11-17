@@ -13,14 +13,37 @@ compare = pd.read_feather('G:\PSW\working code\MRMS-eval-with-gages-in-CO\output
 
 # see what mce distribution looks like when MRMS FN
 df = compare.loc[(compare.total_accum_atgage>1)|(compare.total_gage_accum>1)]
+# %%
+'''# normalize with max value at gage
+compare['gage_id'] = [compare.gage_id[i][0] for i in compare.index]
+combined_values = compare.groupby('gage_id').agg(list)[['mrms','gage']]
+
+max_combined = []
+for i in range(len(combined_values)):
+    g = np.max(np.concatenate(combined_values.iloc[i].gage))
+    m = np.max(np.concatenate(combined_values.iloc[i].mrms))
+    max_combined.append(max(g,m))
+
+max_values = pd.DataFrame([combined_values.index,max_combined]).T.rename(columns={0:'gage_id',1:'max_value'})'''
 
 # %%
+# get normalized rmse
 current_datetime = datetime.now()
-mce_raw = []
-mce_sorted = []
-mce_unsorted = []
+rmse_raw = []
+rmse_sorted = []
+rmse_unsorted = []
+
+def rmse(x1,x2,gm):
+    rmse = np.sqrt(np.sum((x1-x2)**2)/len(gm))
+    return rmse
+
 for i in df.index:
+    print(i/len(df))
+    #id = df.gage_id[i][0]
+    #max_value = max_values.loc[max_values.gage_id == gid].max_value.iloc[0]
+    
     gm = pd.DataFrame(data=[df.gage[i],df.mrms[i]]).T.rename(columns={0:'gage',1:'mrms'})
+    max_value = np.max(gm.mean())
     gm = gm.loc[(gm.gage>0)|(gm.mrms>0)]
 
     datetime_index = pd.date_range(start='2023-11-15', periods=len(gm), freq='1T')
@@ -41,6 +64,37 @@ for i in df.index:
     g_sort = np.sort(g_r)
     m_sort = np.sort(m_r)
     
+    rmse_raw.append(rmse(g,m,gm)/max_value)
+    rmse_unsorted.append(rmse(g_r,m_r,gm)/max_value)
+    rmse_sorted.append(rmse(g_sort,m_sort,gm)/max_value)
+
+# %%
+current_datetime = datetime.now()
+mce_raw = []
+mce_sorted = []
+mce_unsorted = []
+for i in df.index:
+    gm = pd.DataFrame(data=[df.gage[i],df.mrms[i]]).T.rename(columns={0:'gage',1:'mrms'})
+    gm = gm.loc[(gm.gage>0)|(gm.mrms>0)]
+
+    datetime_index = pd.date_range(start='2023-11-15', periods=len(gm), freq='1T')
+
+    gm['dt'] = datetime_index
+    
+    gm = gm.set_index('dt',drop=True)
+    # only look at samples where positive
+    
+    gm_r = gm.resample('20min').max()
+    
+    g = gm.gage.values
+    m = gm.mrms.values
+
+    g_r = gm_r.gage.values
+    m_r = gm_r.mrms.values
+
+    g_sort = np.sort(g_r)
+    m_sort = np.sort(m_r)
+    
     mce_raw.append(1-(np.mean(np.abs(m - g))/np.mean(np.abs(g - np.mean(g)))))
     mce_unsorted.append(1-(np.mean(np.abs(m_r - g_r))/np.mean(np.abs(g_r - np.mean(g_r)))))
     mce_sorted.append(1-(np.mean(np.abs(m_sort - g_sort))/np.mean(np.abs(g_sort - np.mean(g_sort)))))
@@ -48,7 +102,7 @@ for i in df.index:
 # %%
 #df['norm_diff'] = mce_raw
 #print('raw')
-df['norm_diff'] = mce_sorted
+df['norm_diff'] = rmse_unsorted
 print('sorted')
 #df['norm_diff'] = mce_unsorted
 #print('unsorted')
@@ -60,7 +114,7 @@ print(len(test))
 # how often is mce high just because gage variability high?
 print(len(test.loc[(test.total_accum_atgage<1)&(test.total_gage_accum>5)]))
 # how often is mce low when values are close?
-test2 = df.loc[(df.total_accum_atgage-df.total_gage_accum<.5)&(df.norm_diff<.4)&(df.max_mrms>5)]
+test2 = df.loc[(df.total_accum_atgage-df.total_gage_accum<.5)&(df.norm_diff<.4)]
 print(len(test2))
 '''for i in range(10): # plot random sample of 10 timeseries
     plot = test2.sample(1)
@@ -77,21 +131,21 @@ for i in range(10): # plot random sample of 10 timeseries
     plt.show()'''
 
 # %%
-df['mce_unsorted'] = mce_unsorted
-df['mce_raw'] = mce_raw
-df['mce_sorted'] = mce_sorted
+df['rmse_unsorted'] = rmse_unsorted
+df['rmse_raw'] = rmse_raw
+df['rmse_sorted'] = rmse_sorted
 
-df.loc[df.mce_unsorted<0,['mce_unsorted']]=-.1
-df.loc[df.mce_raw<0,['mce_raw']]=-.1
-df.loc[df.mce_sorted<0,['mce_sorted']]=-.1
+df.loc[df.rmse_unsorted<0,['rmse_unsorted']]=-.1
+df.loc[df.rmse_raw<0,['rmse_raw']]=-.1
+df.loc[df.rmse_sorted<0,['rmse_sorted']]=-.1
 
 '''hx = np.histogram(df.mce_sorted,bins=np.arange(-.1,1.1,.1))
 hu = np.histogram(df.mce_unsorted,bins=np.arange(-.1,1.1,.1))
 hr = np.histogram(df.mce_raw,bins=np.arange(-.1,1.1,.1))'''
 
-hx = np.histogram(df.mce_sorted,bins=np.arange(0,1.1,.1))
-hu = np.histogram(df.mce_unsorted,bins=np.arange(0,1.1,.1))
-hr = np.histogram(df.mce_raw,bins=np.arange(0,1.1,.1))
+hx = np.histogram(df.rmse_sorted,bins=np.arange(0,1.1,.1))
+hu = np.histogram(df.rmse_unsorted,bins=np.arange(0,1.1,.1))
+hr = np.histogram(df.rmse_raw,bins=np.arange(0,1.1,.1))
 
 import matplotlib as mpl
 

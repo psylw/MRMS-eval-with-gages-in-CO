@@ -8,7 +8,7 @@ import numpy as np
 
 sys.path.append('../class')
 
-from mce import mce
+from NRMSD import nrmsd
 
 # open both window values
 file_path = os.path.join('..', 'output', 'window_values_FN')
@@ -24,8 +24,8 @@ compare = compare.loc[(compare.total_accum_atgage>accumulation_threshold)|(compa
 test = test.loc[(test.total_accum_atgage>accumulation_threshold)|(test.total_gage_accum>accumulation_threshold)]
 # %%
 # calculate mce
-compare_mce = mce(compare)
-test_mce = mce(test)
+compare_mce = nrmsd(compare)
+test_mce = nrmsd(test)
 # %%
 ######################   COMPARE VALUES    ###############################################################################################
 
@@ -67,17 +67,28 @@ for i in range(100):
     plt.show()
 
 # %%
-accumulation_threshold = 1
+
+
+compare['mce']=compare_mce
+test['mce']=test_mce
+
+# %%
+''''''
+accumulation_threshold = 25
 
 compare = compare.loc[(compare.total_accum_atgage>accumulation_threshold)|(compare.total_gage_accum>accumulation_threshold)]
 
 test = test.loc[(test.total_accum_atgage>accumulation_threshold)|(test.total_gage_accum>accumulation_threshold)]
+# %%
+
+
 print(len(test))
+print(len(compare))
 test.loc[test.mce<0,['mce']]=-.1
 compare.loc[compare.mce<0,['mce']]=-.1
 
-h_ms = np.histogram(test.mce,bins=np.arange(0,1.1,.1))
-h_r = np.histogram(compare.mce,bins=np.arange(0,1.1,.1))
+h_ms = np.histogram(test.mce,bins=np.arange(0,10,.5))
+h_r = np.histogram(compare.mce,bins=np.arange(0,10,.5))
 
 
 import matplotlib as mpl
