@@ -70,28 +70,34 @@ n_splits = 5
 split_idx = []
 
 train = train.reset_index(drop=True)
+sample = train
 
 for i in range(n_splits):
-
-    # select gages for testing, weight number of samples so frac positive close to global frac pos
     test_s = sample.groupby(['latitude','longitude']).count().total_accum_atgage
-    test_s_pos = sample.loc[sample.label==1].groupby(['latitude','longitude']).count().total_accum_atgage
-    test_s_pos_frac = test_s_pos/test_s
-    # weight locations with frac pos closer to global frac pos higher
-    weights = 1.0 / np.abs(pos_frac - test_s_pos_frac) 
-    weights = weights.fillna(5)
 
-    split = test_s.sample(frac=1/(n_splits-i), weights=weights,random_state=4).reset_index()
+    weights = 1.0 / grouped
+
+    split = test_s.sample(frac=1/(n_splits-i), weights=weights,random_state=200).reset_index()
 
     split_lat,split_lon = split.latitude,split.longitude
     
     split = sample.loc[(sample.latitude.isin(split_lat))&(sample.longitude.isin(split_lon))]
     
     split_idx.append(split.index)
-    print(len(split.loc[split.label==1])/len(split))
-    
+    print(len(split.index)/len(train))
     sample = sample.loc[~sample.index.isin(split.index)]
+#%%
+for i in range(n_splits):
+    fold_test_idx = split_idx[i]
 
+    x1,y1 = train.iloc[fold_test_idx].longitude,train.iloc[fold_test_idx].latitude
+
+    plt.scatter(x1,y1,label=str(i))
+    
+    plt.legend()
+
+plt.scatter(test.longitude,test.latitude,label='test')
+#%%
 cv = []
 
 for i in range(n_splits):
@@ -107,7 +113,7 @@ scaler.fit_transform(test.drop(columns=['error'])),
 train.error.values,
 test.error.values)
 
-#v = folds # is this indexing correctly????
+
 # %%
 names = [
     "Nearest Neighbors",
@@ -158,51 +164,63 @@ for name, clf in zip(names, classifiers):
 
 # %%
 # baseline
-avgp=[]
-f1=[]
+r2=[]
 
 for name, clf in zip(names, classifiers):
-    clf = clf
-
+    print(name)
     x = cross_validate(clf,X_train,y_train, cv = cv,
-                     scoring=['f1','average_precision'])
+                     scoring='r2')
+    r2.append([name,x['test_score'].mean(),x['test_score'].std()])
 
-    f1.append([name,str(x['test_f1'].mean())[0:4], str(x['test_f1'].std())[0:6]])
-    avgp.append([name,str(x['test_average_precision'].mean())[0:4],str(x['test_average_precision'].std())[0:6]])
-
-f1_baseline = pd.DataFrame(f1,columns=['names','f1','std']).sort_values(['f1'])
-avp_baseline = pd.DataFrame(avgp,columns=['names','avgp','std']).sort_values(['avgp'])
-
-avp_baseline
+r2 = pd.DataFrame(r2,columns=['names','r2','std']).sort_values(['r2'])
 # %%
+#xgb
+param = {"learning_rate": [0.5, 0.25, 0.1, 0.05, 0.01,.001], 
+                            "n_estimators": [64, 100, 200,400,600],
+                            "max_depth":[5,10,20,30],
+                                'min_child_weight': [1, 5, 10],
+                                'gamma': [1, 1.5, 2, 5,6],
+                                'subsample': [0.6, 0.8, 1.0],
+                                'colsample_bytree': [0.6, 0.8, 1.0],
+                                'lambda':np.arange(0,10,.3),
+                                'alpha': np.arange(0,1,.1)}
+
+clf = xgb.XGBRegressor(random_state=0)
+
+mod = RandomizedSearchCV(estimator=clf,
+                    param_distributions = param,
+                    n_iter=10, 
+                    scoring='neg_mean_absolute_error',
+                    refit="neg_mean_absolute_error",
+                    cv=cv)
+
+_ = mod.fit(X_train,y_train)  
+
+# %%
+param = {'subsample': 0.6,
+ 'n_estimators': 400,
+ 'min_child_weight': 5,
+ 'max_depth': 30,
+ 'learning_rate': 0.01,
+ 'lambda': 0.8999999999999999,
+ 'gamma': 6,
+ 'colsample_bytree': 1.0,
+ 'alpha': 0.7000000000000001}
+
+clf = xgb.XGBRegressor(random_state=0, **param)
+
+clf.fit(X_train,y_train)
+
+print(r2_score(y_test,clf.predict(X_test)))
+
+feature_names = train.drop(columns='error').columns
+mdi_importances = pd.Series(
+    clf.feature_importances_, index=feature_names).sort_values(ascending=True)
+mdi_importances.plot.barh()
+plt.show()
+
+#%%
 # initial hyperparameter tuning
-classifiers = [
-    Pipeline([
-        ('sampling', SMOTE(random_state=0)),
-        ('clf', KNeighborsClassifier())
-    ]),
-    DecisionTreeClassifier(random_state=0),
-    RandomForestClassifier(random_state=0),
-    Pipeline([
-        ('sampling', SMOTE(random_state=0)),
-        ('clf', BaggingClassifier(random_state=0))
-    ]),
-    Pipeline([
-        ('sampling', SMOTE(random_state=0)),
-        ('clf', MLPClassifier(random_state=0,max_iter=800))
-    ]),
-    Pipeline([
-        ('sampling', SMOTE(random_state=0)),
-        ('clf', AdaBoostClassifier(random_state=0))
-    ]),
-    LogisticRegression(random_state=0,max_iter= 800),
-    xgb.XGBClassifier(random_state=0),
-    Pipeline([
-        ('sampling', SMOTE(random_state=0)),
-        ('clf', GradientBoostingClassifier(random_state=0))
-    ]),
-    SVC(random_state=0,probability=True)
-]
 
 param = [
     # knn

@@ -56,17 +56,23 @@ df = df.loc[df.longitude<255.5].dropna()
 
 
 # %%
-#df['norm_diff'] = np.load(os.path.join('..', 'output', 'nrmsd_mscorrect.npy'))
-df['norm_diff'] = nrmsd(df)
+df['norm_diff'] = np.load(os.path.join('..', 'output', 'nrmsd_mscorrect_mean.npy'))
+#df['norm_diff'] = nrmsd(df)
 # %%
 test = df.drop(columns = ['gage_id', 'mce','mrms_accum_atgage','gage_accum', 
        'onoff', 'mrms', 'gage'])
 
+high = test.loc[test.norm_diff<df.norm_diff.quantile(.01)]
+print(len(high))
+#med = test.loc[(test.norm_diff>=.3)&(test.norm_diff<=3)].sample(n=len(high))
+
+low = test.loc[test.norm_diff>df.norm_diff.quantile(.99)]
+
 #high = test.loc[(test.norm_diff<.05)]
 #high = test.loc[(test.norm_diff<5)&(test.norm_diff>-5)]
 
-low = test.loc[(test.norm_diff>50)|(test.norm_diff<-50)]
-high = test.loc[(test.norm_diff<5)&(test.norm_diff>-5)].sample(n=len(low))
+#low = test.loc[(test.norm_diff>50)|(test.norm_diff<-50)]
+#high = test.loc[(test.norm_diff<5)&(test.norm_diff>-5)].sample(n=len(low))
 #low = df.loc[(df.mce<.5)&(df.mce>0)&(df.total_accum_atgage>10)]
 #low = test.loc[(test.norm_diff>.3)].sample(n=len(high))
 # %%
@@ -81,10 +87,11 @@ for i in high.columns:
 from sklearn.preprocessing import StandardScaler
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
-high['label'] = 1
+high['label'] = 2
+med['label'] = 1
 low['label'] = 0
 
-tsne = pd.concat([high,low])
+tsne = pd.concat([high,med,low])
 
 scaler = StandardScaler()
 
@@ -93,7 +100,7 @@ t_sne = TSNE(n_components=2,random_state=100)
 S_t_sne = t_sne.fit_transform(data)
 
 labels = tsne.label
-
+# %%
 colors = ["navy", "darkorange","darkgreen" ]
 markers=['x','+','*']
 
@@ -105,20 +112,22 @@ for ax in axs[0:, 0]:
 axbig = fig.add_subplot(gs[0:, 0])
 
 
-for marker,color, i in zip(markers,colors, [0,1]):
+for marker,color, i in zip(markers,colors, [0,1,2]):
     axbig.scatter(
         S_t_sne[labels == i, 0], S_t_sne[labels == i, 1],color=color, marker=marker,alpha=0.5, lw=2, label=i
     )
 plt.legend(['label = 0','label = 1'],loc="best", shadow=False,scatterpoints=1,markerscale=1.5)
 #plt.title("t-sne")
 
+
+
 for marker,color, i in zip(markers,colors, [0]):
     axs[0,1].scatter(
         S_t_sne[labels == i, 0], S_t_sne[labels == i, 1],color="navy", marker='x',alpha=0.5, lw=2, label=i
     )
-for marker,color, i in zip(markers,colors, [1]):
+for marker,color, i in zip(markers,colors, [2]):
     axs[1,1].scatter(
-        S_t_sne[labels == i, 0], S_t_sne[labels == i, 1],color="darkorange", marker='+',alpha=0.5, lw=2, label=i
+        S_t_sne[labels == i, 0], S_t_sne[labels == i, 1],color="darkgreen", marker='*',alpha=0.5, lw=2, label=i
     )
 axbig.legend(['label = 0','label = 1'],loc="best", shadow=False,scatterpoints=1,markerscale=1.5)
 axs[0,1].set_title('label = 0')

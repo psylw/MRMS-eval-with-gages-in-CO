@@ -1,3 +1,4 @@
+# %%
 from datetime import datetime, time
 import os
 import urllib.request
@@ -14,22 +15,23 @@ from datetime import timedelta
 
 # change dates and sample interval
 
-start = datetime(2021, 7, 1, 0, 0)
-end = datetime(2021, 9, 30, 23, 0)
-#minute = timedelta(minutes=2)
-hours = timedelta(hours=1)
+start = datetime(2023, 8, 1, 0, 0)
+end = datetime(2023, 8, 31, 23, 58)
+minute = timedelta(minutes=2)
+#minute = timedelta(hours=1)
 # only download certain months
-mo1 = 7
-mo2 = 9
+mo1 = 8
+mo2 = 8
 
 # indicate which product to download (rate,RQI,QPE_multi,QPE_radar)
-product = 'QPE_multi'
+product = 'rate'
 
 # tell program where to download files ==> /data/raw
 # Create a path to the code file
 codeDir = os.path.dirname(os.path.abspath(os.getcwd()))
 # Create a path to the data folder
-destination = os.path.join(codeDir,"data","processed")
+# destination = os.path.join(codeDir,"data","processed")
+destination = 'C:\\Users\\GSCOB\\OneDrive - Colostate\\Desktop\\tempMRMS\\08'
 # Change to data folder
 os.chdir(destination)
 
@@ -95,3 +97,5 @@ print(radar_also_missing)
 
 
 
+
+# %%
