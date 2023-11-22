@@ -34,8 +34,10 @@ m = xr.open_dataset(parentDir+'\\'+'mrms_atgage_stormsonly_radaronly.nc',chunks=
 # select mrms 1 gage at a time, find storms
 target = []
 predict = []
-
+for j in years
+open mfdataset for 5 months
 for i in range(len(coord)):
+    
     print('gagecount='+str(i))
     # get corresponding mrms coordinate
     latt = coord[i][0]
@@ -61,6 +63,7 @@ for i in range(len(coord)):
     # 15-min intensity caused weird rounding issues, fix by setting to zero
     g.loc[g['15_int']<0.0001] = 0
     
+
     # select times after first positive and before last negative, check that gage actually recording
     g = g[g.loc[g['15_int']>0].index[0]:g.loc[g['15_int']>0].index[-1]]
 

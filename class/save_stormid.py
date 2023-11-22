@@ -44,12 +44,13 @@ destination = os.path.join('..', '..','..','storm_stats')
 client = Client()
 
 for i in range(len(filenames)):
-    month_id = (i+1)/100
+    print(i)
+
     month = xr.open_dataset(filenames[i], engine = "cfgrib",chunks={'time': '500MB'})
 
     month = month.where(month.longitude<=256,drop=True)
-    month = month.unknown.where(month.unknown > 0, drop=True)
-
+    #month = month.unknown.where(month.unknown > 0, drop=True)
+    month = month.unknown
     storm_id = find_storms(month)
     centroid = storm_properties(storm_id)
 
@@ -60,7 +61,7 @@ for i in range(len(filenames)):
     name = filenames[i][0:8]+'_regionprops'
     storm_param.to_feather(destination+name)
 
-    storm_id = storm_id.astype('float32')+month_id
+    storm_id = storm_id.astype('float32')
     # create dataset from storm_id
     time = month.time
     latitude = month.latitude 
