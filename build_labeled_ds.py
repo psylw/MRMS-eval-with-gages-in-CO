@@ -29,12 +29,14 @@ client = Client()
 # 2 min ACCUMULATION for months may thru sep, 2021/2022, in MDT
 #m = xr.open_dataset(parentDir+'\\'+'mrms_atgage_stormsonly.nc',chunks={'time': '50MB'})
 m = xr.open_dataset(parentDir+'\\'+'mrms_atgage_stormsonly_radaronly.nc',chunks={'time': '50MB'})
+#####################################################################################################################   LOOK AT GAGE DATA, LOOK AT MRMS DATA
+# MOVE TO ANOTHER FILE
 
 #####################################################################################################################   SAVE GAGE AND MRMS IN 8HR CHUNKS
 # select mrms 1 gage at a time, find storms
 target = []
 predict = []
-for j in years
+for yr in years
 open mfdataset for 5 months
 for i in range(len(coord)):
     

@@ -11,7 +11,7 @@ from dask.distributed import Client
 import shutil 
 import os
 import glob
-
+# %%
 def find_storms(mrms_ds):
     # create binary ndarray
     a = xr.where(mrms_ds > 0, 1, 0)
@@ -42,7 +42,7 @@ filenames = glob.glob(data_folder+'//'+'*.grib2')
 destination = os.path.join('..', '..','..','storm_stats')
 
 client = Client()
-
+# %%
 for i in range(len(filenames)):
     print(i)
 
@@ -51,6 +51,8 @@ for i in range(len(filenames)):
     month = month.where(month.longitude<=256,drop=True)
     #month = month.unknown.where(month.unknown > 0, drop=True)
     month = month.unknown
+
+    print(month)
     storm_id = find_storms(month)
     centroid = storm_properties(storm_id)
 

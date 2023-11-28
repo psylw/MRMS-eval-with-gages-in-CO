@@ -15,8 +15,8 @@ from datetime import timedelta
 
 # change dates and sample interval
 
-start = datetime(2018, 6, 1, 0, 0)
-end = datetime(2018, 6, 30, 23, 58)
+start = datetime(2023, 6, 1, 0, 0)
+end = datetime(2023, 6, 30, 23, 58)
 minute = timedelta(minutes=2)
 #minute = timedelta(hours=1)
 # only download certain months
@@ -31,7 +31,7 @@ product = 'RQI'
 codeDir = os.path.dirname(os.path.abspath(os.getcwd()))
 # Create a path to the data folder
 # destination = os.path.join(codeDir,"data","processed")
-destination = 'Z:\\mrms_temp\\0618'
+destination = 'Z:\\mrms_temp\\0623'
 # Change to data folder
 os.chdir(destination)
 

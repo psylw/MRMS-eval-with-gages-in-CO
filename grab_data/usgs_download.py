@@ -9,7 +9,7 @@ gage_folder = os.path.join('..', '..','..','precip_gage')
 gage_id = pd.read_csv(gage_folder+'\\usgs_public_meta.csv',index_col=0).reset_index()['Site Number'].astype('str')
 
 gage_id = [gage_id[i].split('.')[0] for i in gage_id.index]
-
+# %%
 for i in range(len(gage_id)):
     if len(gage_id[i])<8:
         gage_id[i]=str(0)+gage_id[i]

@@ -1,40 +1,36 @@
+
 from os import listdir
 import numpy as np
+import os
 from datetime import datetime, timezone, timedelta
 import pandas as pd
 #from mrms_gage import gage_storm
-
+#data_folder = os.path.join('..', '..','..','precip_gage')
 def get_grizzly(data_folder):
-    filenames = listdir(data_folder +'\\gages')
-    filenames.sort(reverse=True)
+    filenames = listdir(data_folder +'\\usgs_grizzly')
+
     gage_id = [filenames[i][0:5] for i in range(len(filenames))]
     # read attribute table
-    gage_location = pd.read_csv(data_folder +'\\Grizzly_attributes.csv')
-    # drop extra data
-    gage_location = gage_location.drop(columns=['Gauge_Name', 'Gauge_Name','Fire','Source',
-    'Operator','Elevation','Label_Name'])
-    # select gages of interest
-    gage_location = gage_location[gage_location['ID'].isin(gage_id)]
-    # replace longitude in datafram with global crs
-    gage_location['Long'] = gage_location['Long'].to_numpy()+360
-    gage_id = gage_location['ID'].values
+    meta = pd.read_csv(data_folder +'\\usgs_grizzly_meta.csv')
 
-    gage = [pd.read_csv(data_folder +'\\gages\\'+i+'_20210727_20210930_checked_processed.csv') for i in gage_id]
+    gage = []
+    for id in gage_id:
+        g = pd.read_csv(data_folder +'\\usgs_grizzly\\'+id+'_20210727_20210930_checked_processed.csv')
 
-    gage = [gage[i].drop(gage[i].columns.difference(['TimeStamp (Local)','15-minute Intensity (mm/h)','Bin Accum (mm)']), 1) for i in range(len(gage_id))]
+        lat = meta.loc[meta.ID==id].Lat.values[0]
+        lon = meta.loc[meta.ID==id].Long.values[0]+360
 
-    gage = [gage[i].rename(columns={"TimeStamp (Local)": "datetime","15-minute Intensity (mm/h)": "15_int","Bin Accum (mm)": "accum"}
-                    ) for i in range(len(gage_id))]
+        g = g.drop(g.columns.difference(['TimeStamp (Local)','15-minute Intensity (mm/h)','Bin Accum (mm)']), 1)
 
-    # change datetime type
-    for i in range(len(gage_id)):
-        gage[i].datetime = gage[i].datetime.astype('datetime64[ns]')
+        g = g.rename(columns={"TimeStamp (Local)": "datetime","15-minute Intensity (mm/h)": "15_int","Bin Accum (mm)": "accum"})
+        
+        g['datetime'] = pd.to_datetime(g['datetime']) + pd.Timedelta(hours=6)
+        g = g.set_index('datetime')
 
-    gage = [gage[i].set_index('datetime') for i in range(len(gage_id))]
+        g = g.iloc[g.index.month.isin(range(5,10))]
 
-    gage = [gage[i].fillna(0) for i in range(len(gage_id))]
+        g = g[g.loc[g.accum>0].index[0]:g.loc[g.accum>0].index[-1]]
 
-    coord = zip(gage_location.Lat,gage_location.Long)
-    gage = dict(zip(coord, gage))
-
+        gage.append(['usgs',2021, lat,lon,g])
     return gage
+

@@ -15,7 +15,7 @@ from datetime import timedelta
 
 # change dates and sample interval
 
-start = datetime(2020, 5, 1, 0, 0)
+start = datetime(2020, 5, 30, 11, 34)
 end = datetime(2020, 5, 31, 23, 58)
 minute = timedelta(minutes=2)
 #minute = timedelta(hours=1)

@@ -1,5 +1,3 @@
-
-
 import pandas as pd
 import numpy as np
 import os
@@ -23,21 +21,23 @@ def get_coagmet(data_folder):
             lat = meta.loc[meta.Station==j]['Latitude (degN)'].values[0]
             lon = meta.loc[meta.Station==j]['Longitude (degE)'].values[0]+360
 
-            # select times after first positive and before last negative, check that gage actually recording
-            year_gage = year_gage[year_gage.loc[year_gage.accum>0].index[0]:year_gage.loc[year_gage.accum>0].index[-1]]
+            try:
+                # select times after first positive and before last negative for year, a check that gage actually recording
+                year_gage = year_gage[year_gage.loc[year_gage.accum>0].index[0]:year_gage.loc[year_gage.accum>0].index[-1]]
 
-            year_gage = year_gage.drop(columns=['index','id'])
+                year_gage = year_gage.drop(columns=['index','id'])
 
-            if len(year_gage)>0 and lon<255.5:
-                year_gage['datetime'] = pd.to_datetime(year_gage['datetime'])
-                year_gage = year_gage.set_index('datetime')
+                if len(year_gage)>0 and lon<255.5:
+                    year_gage['datetime'] = pd.to_datetime(year_gage['datetime'])
+                    year_gage = year_gage.set_index('datetime')
+                    year_gage = year_gage.iloc[year_gage.index.month.isin(range(5,10))]
 
-                year_gage = year_gage.resample('1Min').asfreq().fillna(0)
+                    year_gage = year_gage.resample('1Min').asfreq().fillna(0)
+                    year_gage['15_int'] = (year_gage.accum.rolling(15,min_periods=1).sum())*(60/15)
 
-                year_gage['15_int'] = (year_gage.accum.rolling(15,min_periods=1).sum())*(60/15)
-
-                gage.append(['coagmet',yr, lat,lon,year_gage])
-        
+                    gage.append(['coagmet',yr, lat,lon,year_gage])
+            except:
+                pass
     return gage
 
 
