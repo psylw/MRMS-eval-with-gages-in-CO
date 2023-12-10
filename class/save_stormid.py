@@ -41,7 +41,7 @@ filenames = glob.glob(data_folder+'//'+'*.grib2')
 
 destination = os.path.join('..', '..','..','storm_stats')
 
-client = Client()
+#client = Client()
 # %%
 for i in range(len(filenames)):
     print(i)
@@ -60,7 +60,7 @@ for i in range(len(filenames)):
 
     storm_param = pd.DataFrame(data = data)
 
-    name = filenames[i][0:8]+'_regionprops'
+    name = '//'+filenames[0][-22:-6]+'_regionprops'
     storm_param.to_feather(destination+name)
 
     storm_id = storm_id.astype('float32')
@@ -72,7 +72,7 @@ for i in range(len(filenames)):
     ds = xr.Dataset(data_vars=dict(storm_id=(["time", "latitude", "longitude"], storm_id),),
         coords=dict(time=time,latitude=latitude,longitude=longitude,))
 
-    name = filenames[i][0:8]+'storm_id'
+    name = '//'+filenames[i][-22:-6]+'_storm_id'
 
     path = destination+name+'.nc'
     ds.to_netcdf(path=path)

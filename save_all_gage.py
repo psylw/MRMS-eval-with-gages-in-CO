@@ -1,4 +1,4 @@
-
+# %%
 import os
 from os import listdir
 import sys
@@ -14,6 +14,7 @@ from usgs_new import *
 
 # Create a path to the code file
 data_folder = os.path.join('..', '..','precip_gage')
+
 
 # coagmet
 coag = get_coagmet(data_folder)
@@ -35,3 +36,4 @@ gage = [coag, cpf, disdrom,grizzly, other, new_usgs]
 # Saving the dictionary to a file using Pickle
 with open('output//gage_all.pickle', 'wb') as file:
     pickle.dump(gage, file)
+# %%

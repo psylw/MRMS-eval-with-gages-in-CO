@@ -25,7 +25,7 @@ def get_disdrom(data_folder):
     dis2 = dis2.drop(['Date','Time'],axis=1).set_index('datetime')
 
     disdrom = pd.concat([dis1,dis2], axis=0).sort_index()
-    disdrom.index = disdrom.index + pd.Timedelta(hours=7)
+    disdrom.index = disdrom.index + pd.Timedelta(hours=6)
 
     disdrom = disdrom[~disdrom.index.duplicated(keep='first')].resample('1Min').asfreq().fillna(0)
     disdrom = disdrom.iloc[disdrom.index.month.isin(range(5,10))]

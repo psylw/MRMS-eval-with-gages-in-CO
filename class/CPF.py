@@ -22,7 +22,6 @@ def get_cpf(data_folder):
         for yr in range(2018,2024):
             year_gage = g.iloc[g.index.year==yr]
             try:
-                year_gage = g
                 id = year_gage.site_id.unique()[0].strip("'")
 
                 lat = float(meta.loc[meta.Name==id]['Latitude'].values[0])
@@ -38,13 +37,16 @@ def get_cpf(data_folder):
                 year_gage = year_gage[year_gage.loc[year_gage.accum>0].index[0]:year_gage.loc[year_gage.accum>0].index[-1]]
 
                 year_gage = year_gage.drop(columns=['tip'])
+                year_gage = year_gage.iloc[year_gage.index.month.isin(range(5,10))]
 
                 if len(year_gage)>0 and lon<255.5:
                     year_gage = year_gage.resample('1Min').asfreq().fillna(0)
-                    year_gage = year_gage.iloc[year_gage.index.month.isin(range(5,10))]
+
                     year_gage['15_int'] = (year_gage.accum.rolling(15,min_periods=1).sum())*(60/15)
                     gage.append(['csu',yr, lat,lon,year_gage])
             except:
                     pass
     return gage
 
+
+# %%

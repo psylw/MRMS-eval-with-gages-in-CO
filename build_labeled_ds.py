@@ -1,3 +1,4 @@
+# %%
 import os
 import xarray as xr
 from dask.distributed import Client
@@ -6,90 +7,96 @@ from os import listdir
 #import rioxarray as rxr
 import glob
 import pickle
+import pandas as pd
+import numpy as np
 
 #####################################################################################################################   IMPORT GAGE DATA
 
 # Load the dictionary from the Pickle file
-with open('output//data.pickle', 'rb') as file:
+with open('test//gage_all.pickle', 'rb') as file:
     gage = pickle.load(file)
 
-# get list of keys (lat/lon)
-coord = [i for i in gage.keys()]
-
-
-# Create a path to the code file
-codeDir = os.path.dirname(os.path.abspath(os.getcwd()))
-parentDir = os.path.dirname(codeDir)
-
-client = Client()
+#client = Client()
 
 #####################################################################################################################   IMPORT MRMS DATA 
 # see mrms_atgage.py for how this dataset was built
-
-# 2 min ACCUMULATION for months may thru sep, 2021/2022, in MDT
-#m = xr.open_dataset(parentDir+'\\'+'mrms_atgage_stormsonly.nc',chunks={'time': '50MB'})
-m = xr.open_dataset(parentDir+'\\'+'mrms_atgage_stormsonly_radaronly.nc',chunks={'time': '50MB'})
+mrms_folder = os.path.join('mrms_atgage')
+filenames_rate = os.listdir(mrms_folder)
 #####################################################################################################################   LOOK AT GAGE DATA, LOOK AT MRMS DATA
 # MOVE TO ANOTHER FILE
 
 #####################################################################################################################   SAVE GAGE AND MRMS IN 8HR CHUNKS
-# select mrms 1 gage at a time, find storms
+# %%
 target = []
 predict = []
-for yr in years
-open mfdataset for 5 months
-for i in range(len(coord)):
-    
-    print('gagecount='+str(i))
-    # get corresponding mrms coordinate
-    latt = coord[i][0]
-    lont = coord[i][1]
-    # select mrms at coordinate
-    m_g = m.sel(longitude=lont,latitude=latt,method='nearest',drop=True)
-    # convert to pandas dataframe, speeds things up
-    m_g = m_g.dropna(dim='time').to_dataframe()
-    
-    # calculate 15-min intensity
-    mrms_15_21 = m_g.iloc[m_g.index.year==2021].resample('1min').asfreq()
-    mrms_15_21.unknown = mrms_15_21.unknown.fillna(0)
-    mrms_15_21.unknown = (mrms_15_21.unknown.rolling(15,min_periods=1).sum())*(60/15) 
-    mrms_15_22 = m_g.iloc[m_g.index.year==2022].resample('1min').asfreq()
-    mrms_15_22.unknown = mrms_15_22.unknown.fillna(0)
-    mrms_15_22.unknown = (mrms_15_22.unknown.rolling(15,min_periods=1).sum())*(60/15) 
 
-    mrms_15 = pd.concat([mrms_15_21,mrms_15_22],axis=0)
-    
-    # get gage
-    g = gage[coord[i]].fillna(0)
+for yr in range(2018,2024):
+    print(yr)
+    name = [s for s in filenames_rate if str(yr) in s][0]
+    rate = xr.open_dataset(mrms_folder+'//'+name,chunks={'time': '500MB'})
+    rate = rate.where(rate>=0)
+    rate = rate*(2/60)
 
-    # 15-min intensity caused weird rounding issues, fix by setting to zero
-    g.loc[g['15_int']<0.0001] = 0
-    
+    for i in range(len(gage)):
+        for j in range(len(gage[i])):
+            if i!=2 and gage[i][j][1]==yr:
 
-    # select times after first positive and before last negative, check that gage actually recording
-    g = g[g.loc[g['15_int']>0].index[0]:g.loc[g['15_int']>0].index[-1]]
+                g = gage[i][j][4]
+                g['gage_lat'] = gage[i][j][2]
+                g['gage_lon'] = gage[i][j][3]
+                g['gage_source'] = gage[i][j][0]
 
-    # select gage data within mrms times, only look at gage data when I have mrms data
-    g = g.loc[g.index.isin(mrms_15.index)]
-    g['gage']=i
-    
-    # select mrms times within gage times, only look at mrms data when gage is recording
-    mrms_15 = mrms_15.loc[mrms_15.index.isin(g.index)]
-    
-    mrms_15['accum']=m_g.loc[m_g.index.isin(mrms_15.index)].unknown
-    mrms_15.accum = mrms_15.accum.fillna(0)
-    
-    # rechunk gage and mrms 
-    target.append(g.resample('8h').agg(list))
-    predict.append(mrms_15.resample('8h').agg(list))
-    
+                rate_gage = rate.sel(latitude = gage[i][j][2], longitude= gage[i][j][3], method='nearest')
+                mrms_lat = rate_gage.latitude
+                mrms_lon = rate_gage.longitude
+
+                rate_gage = rate_gage.to_dataframe()
+                rate_gage = rate_gage.unknown.resample('1min').asfreq().fillna(0)
+                # select mrms times within gage times, only look at mrms data when gage is recording
+                rate_gage = rate_gage.loc[rate_gage.index.isin(g.index)]
+                int_gage = rate_gage.rolling(15,min_periods=1).sum()*(60/15)
+
+                mrms = pd.concat([rate_gage.rename('mrms_accum'),int_gage.rename('mrms_15_int')],axis=1)
+                mrms['mrms_lat'] = mrms_lat.values
+                mrms['mrms_lon'] = mrms_lon.values
+                # rechunk gage and mrms 
+                target.append(g.resample('8h').agg(list))
+                predict.append(mrms.resample('8h').agg(list))
+
+            elif i==2 and gage[i][1]==yr:
+
+                g = gage[i][4]
+                g['gage_lat'] = gage[i][2]
+                g['gage_lon'] = gage[i][3]
+                g['gage_source'] = gage[i][0]
+
+                rate_gage = rate.sel(latitude = gage[i][2], longitude= gage[i][3], method='nearest')
+                mrms_lat = rate_gage.latitude.values
+                mrms_lon = rate_gage.longitude.values
+
+                rate_gage = rate_gage.to_dataframe()
+                rate_gage = rate_gage.unknown.resample('1min').asfreq().fillna(0)
+                # select mrms times within gage times, only look at mrms data when gage is recording
+                rate_gage = rate_gage.loc[rate_gage.index.isin(g.index)]
+                int_gage = rate_gage.rolling(15,min_periods=1).sum()*(60/15)
+
+                mrms = pd.concat([rate_gage.rename('mrms_accum'),int_gage.rename('mrms_15_int')],axis=1)
+                mrms['mrms_lat'] = mrms_lat
+                mrms['mrms_lon'] = mrms_lon
+                # rechunk gage and mrms 
+                target.append(g.resample('8h').agg(list))
+                predict.append(mrms.resample('8h').agg(list))
+#%%
 target = pd.concat(target)
 predict = pd.concat(predict)
 
-d = {'mrms':predict.unknown,'gage':target['15_int'],'storm_id':predict.storm_id,'gage_id':target.gage,
+compare = pd.concat([target,predict],axis=1)
+
+# %%
+d = {'mrms_int':predict.unknown,'gage_int':target['15_int'],'storm_id':predict.storm_id,'gage_id':target.gage,
      'mrms_accum_atgage':predict.accum, 'gage_accum':target.accum}
 compare = pd.DataFrame(data=d)
-
+# %%
 compare.storm_id = [np.unique(compare.storm_id[i]) for i in range(len(compare))]
 compare.gage_id = [np.unique(compare.gage_id[i]) for i in range(len(compare))]
 
@@ -120,16 +127,27 @@ for i in test.index:
 test['mce_unsorted'] = mce_unsorted
 
 test.loc[test.mce_unsorted<0,['mce_unsorted']]=-.1
-
+# %%
 #####################################################################################################################   REMOVE SAMPLES WHERE NOTHING HAPPENING AND SAVE
-compare['total_accum_atgage']=[np.sum(compare.mrms_accum_atgage[i]) for i in range(len(compare))]
+compare['total_gage_accum']=[np.sum(compare.accum[i]) for i in range(len(compare))]
 
-compare['total_gage_accum']=[np.sum(compare.gage_accum[i]) for i in range(len(compare))]
-
+compare['total_mrms_accum']=[np.sum(compare.mrms_accum[i]) for i in range(len(compare))]
+# %%
 # save window values
-out = compare.loc[(compare.total_accum_atgage>0)|(compare.total_gage_accum>0)]
-out.reset_index().to_feather('output//window_values')
+out = compare.loc[(compare.total_mrms_accum>0)|(compare.total_gage_accum>0)]
+# %%
+out = out.reset_index()
+mrms_lat = []
+mrms_lon = []
+for i in range(len(out)):
+    mrms_lat.append([i.values for i in out.mrms_lat[i]])
+    mrms_lat.append([i.values for i in out.mrms_lon[i]])
 
+
+#%%
+
+out.reset_index().to_feather('output//window_values_new')
+# %%
 #####################################################################################################################   REMOVE SAMPLES WHERE NOTHING HAPPENING FOR MRMS
 # remove empty timesteps (empty data)
 compare = compare.reset_index(drop=True)
