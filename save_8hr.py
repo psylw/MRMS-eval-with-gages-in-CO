@@ -103,3 +103,15 @@ out = compare.loc[(compare.total_mrms_accum>0)|(compare.total_gage_accum>0)]
 
 out.reset_index().to_feather('output//window_values_new')
 # %%
+import sys
+sys.path.append('class')
+from NRMSD import nrmsd
+
+#%%
+#####################################################################################################################   CALCULATE MCE and save
+
+
+# %%
+compare['norm_diff'] = nrmsd(compare)
+# %%
+compare.to_feather('output/window_values_new')

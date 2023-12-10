@@ -13,9 +13,8 @@ def nrmsd(df):
         #id = df.gage_id[i][0]
         #max_value = max_values.loc[max_values.gage_id == gid].max_value.iloc[0]
         
-        gm = pd.DataFrame(data=[df.gage[i],df.mrms[i]]).T.rename(columns={0:'gage',1:'mrms'})
-        max_value = np.max(gm.mean())
-        gm = gm.loc[(gm.gage>0)|(gm.mrms>0)]
+        gm = pd.DataFrame(data=[df['15_int'][i],df['mrms_15_int'][i]]).T.rename(columns={0:'gage',1:'mrms'})
+        #max_value = np.max(gm.mean())
 
         datetime_index = pd.date_range(start='2023-11-15', periods=len(gm), freq='1T')
 
@@ -24,10 +23,13 @@ def nrmsd(df):
         gm = gm.set_index('dt',drop=True)
         # only look at samples where positive
         
-        gm_r = gm.resample('10min').max()
+        gm = gm.resample('10min').max()
         
-        g_r = gm_r.gage.values
-        m_r = gm_r.mrms.values
+        gm = gm.loc[(gm.gage>0)|(gm.mrms>0)]
 
-        rmse_unsorted.append(rmse(g_r,m_r,gm)/max_value)
+        g = gm.gage.values
+        m = gm.mrms.values
+
+        #rmse_unsorted.append(rmse(g_r,m_r,gm)/max_value)
+        rmse_unsorted.append(rmse(g,m,gm))
     return rmse_unsorted

@@ -15,10 +15,6 @@ from sklearn.neural_network import MLPRegressor
 
 from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor, AdaBoostRegressor, BaggingRegressor
 
-from imblearn.over_sampling import SMOTE
-
-from imblearn.pipeline import Pipeline
-
 from sklearn.model_selection import train_test_split,cross_validate,cross_val_predict,RandomizedSearchCV
 
 from sklearn.metrics import  mean_absolute_error,r2_score
@@ -26,41 +22,49 @@ from sklearn.metrics import  mean_absolute_error,r2_score
 # %%
 
 # open both window values
-file_path = os.path.join('..', '..', 'train_test')
+#file_path = os.path.join('..', '..', 'train_test')
+file_path = os.path.join( 'output', 'train_test_rawRMSE')
 df = pd.read_feather(file_path)
 
-file_path = os.path.join('..', '..', 'min_intensity_gage')
-# remove samples where max mrms intensity < min possible gage intensity
-min_int = pd.read_feather(file_path)
-min_int['gage_id'] = min_int.index
-min_int.min_intensity = min_int.min_intensity
-df['min_int'] = [min_int.loc[min_int.gage_id==df.gage_id[i][0]].min_intensity.values[0] for i in df.index]
-
-df = df.query('max_mrms > min_int')
-
-#df = df.reset_index(drop=True).drop(columns=['min_int','gage_id','max_accum_atgage'])
-df = df.reset_index(drop=True).drop(columns=['min_int','max_accum_atgage'])
-df.gage_id = [df.gage_id[i][0] for i in df.index]
-
-# shift lon to 255.5, was 255 when i developed dataset
-df = df.loc[df.longitude<255.5]
-
 df = df.dropna()
-# %%
-df['error'] = np.load(os.path.join( 'output', 'nrmsd_mscorrect_mean.npy'))
-#df['error'] = np.load(os.path.join( 'output', 'raw_error.npy'))
+
+#  %%
+'''import sys
+
+sys.path.append('class')
+
+from NRMSD import nrmsd
+
+test = pd.read_feather('Z:\working code\MRMS-eval-with-gages-in-CO\output\window_values_new')
+test = test.loc[test.total_mrms_accum>0].dropna().reset_index(drop=True)
+test['mrms_lat'] = [test.mrms_lat[i][0] for i in test.index]
+test['mrms_lon'] = [test.mrms_lon[i][0] for i in test.index]
+df['norm_diff'] = nrmsd(test)
+
+df.reset_index(drop=True).to_feather('train_test_rawRMSE')'''
+
 
 # %%
-df = df.drop(columns=['gage_id', 'mrms_accum_atgage','gage_accum','onoff', 'mce'])
+
+#df = df.loc[(df.total_mrms_accum>1)].reset_index(drop=True)
+
+df['norm_diff'] = df.norm_diff/df.max_mrms
+df = df.loc[(df.total_mrms_accum>1)&(df.norm_diff<4)].reset_index(drop=True)
+# remove correlated features...do this in different file 
+# %%
+df = df.drop(columns=['max_mrms',
+       'max_accum_atgage',  'std_int_point',
+       'var_int_point', 'mean_int_point', 'median_accum_point',
+       'std_accum_point', 'var_accum_point', 'mean_accum_point'])
 
 # %%
-grouped = df.groupby(['latitude','longitude']).count().total_accum_atgage
+grouped = df.groupby(['mrms_lat','mrms_lon']).count().total_mrms_accum
 weights = 1.0 / grouped
 
 test = grouped.sample(frac=.25,weights = weights, random_state=0).reset_index()
 
-test_lat,test_lon = test.latitude,test.longitude
-test = df.loc[(df.latitude.isin(test_lat))&(df.longitude.isin(test_lon))]
+test_lat,test_lon = test.mrms_lat,test.mrms_lon
+test = df.loc[(df.mrms_lat.isin(test_lat))&(df.mrms_lon.isin(test_lon))]
 train = df.loc[~df.index.isin(test.index)]
 print(len(test)/len(df))
 print(len(train)/len(df))
@@ -73,30 +77,31 @@ train = train.reset_index(drop=True)
 sample = train
 
 for i in range(n_splits):
-    test_s = sample.groupby(['latitude','longitude']).count().total_accum_atgage
+    test_s = sample.groupby(['mrms_lat','mrms_lon']).count().total_mrms_accum
 
     weights = 1.0 / grouped
 
     split = test_s.sample(frac=1/(n_splits-i), weights=weights,random_state=200).reset_index()
 
-    split_lat,split_lon = split.latitude,split.longitude
+    split_lat,split_lon = split.mrms_lat,split.mrms_lon
     
-    split = sample.loc[(sample.latitude.isin(split_lat))&(sample.longitude.isin(split_lon))]
+    split = sample.loc[(sample.mrms_lat.isin(split_lat))&(sample.mrms_lon.isin(split_lon))]
     
     split_idx.append(split.index)
     print(len(split.index)/len(train))
     sample = sample.loc[~sample.index.isin(split.index)]
 #%%
-for i in range(n_splits):
+'''for i in range(n_splits):
     fold_test_idx = split_idx[i]
 
-    x1,y1 = train.iloc[fold_test_idx].longitude,train.iloc[fold_test_idx].latitude
+    x1,y1 = train.iloc[fold_test_idx].mrms_lon,train.iloc[fold_test_idx].mrms_lat
 
     plt.scatter(x1,y1,label=str(i))
     
     plt.legend()
 
-plt.scatter(test.longitude,test.latitude,label='test')
+plt.scatter(test.mrms_lon,test.mrms_lat,label='test')'''
+
 #%%
 cv = []
 
@@ -107,11 +112,11 @@ for i in range(n_splits):
 
 # %%
 scaler = StandardScaler()
-X_train, X_test, y_train, y_test = (scaler.fit_transform(train.drop(columns=['error'])),
+X_train, X_test, y_train, y_test = (scaler.fit_transform(train.drop(columns=['norm_diff'])),
                                     
-scaler.fit_transform(test.drop(columns=['error'])),
-train.error.values,
-test.error.values)
+scaler.fit_transform(test.drop(columns=['norm_diff'])),
+train.norm_diff.values,
+test.norm_diff.values)
 
 
 # %%
@@ -133,7 +138,7 @@ classifiers = [
     DecisionTreeRegressor(random_state=0),
     RandomForestRegressor(random_state=0),
     BaggingRegressor(random_state=0),
-    MLPRegressor(random_state=0,max_iter=800),
+    MLPRegressor(random_state=0),
     AdaBoostRegressor(random_state=0),
 
     xgb.XGBRegressor(random_state=0),
@@ -141,7 +146,7 @@ classifiers = [
     SVR()
 ]
 # %%
-feature_names = train.drop(columns='error').columns
+feature_names = train.drop(columns='norm_diff').columns
 
 for name, clf in zip(names, classifiers):
     clf.fit(X_train,y_train)
@@ -156,8 +161,8 @@ for name, clf in zip(names, classifiers):
     print(mean_absolute_error(y_test,ypred))
 
     plt.scatter(y_test,ypred)
-    plt.xlim(0,25)
-    plt.ylim(0,25)
+    #plt.xlim(0,25)
+    #plt.ylim(0,25)
     plt.plot([0,25],[0,25],color='red')
     plt.title(name)
     plt.show()
@@ -170,127 +175,73 @@ for name, clf in zip(names, classifiers):
     print(name)
     x = cross_validate(clf,X_train,y_train, cv = cv,
                      scoring='r2')
+    print(x['test_score'])
     r2.append([name,x['test_score'].mean(),x['test_score'].std()])
 
 r2 = pd.DataFrame(r2,columns=['names','r2','std']).sort_values(['r2'])
-# %%
-#xgb
-param = {"learning_rate": [0.5, 0.25, 0.1, 0.05, 0.01,.001], 
-                            "n_estimators": [64, 100, 200,400,600],
-                            "max_depth":[5,10,20,30],
-                                'min_child_weight': [1, 5, 10],
-                                'gamma': [1, 1.5, 2, 5,6],
-                                'subsample': [0.6, 0.8, 1.0],
-                                'colsample_bytree': [0.6, 0.8, 1.0],
-                                'lambda':np.arange(0,10,.3),
-                                'alpha': np.arange(0,1,.1)}
 
-clf = xgb.XGBRegressor(random_state=0)
-
-mod = RandomizedSearchCV(estimator=clf,
-                    param_distributions = param,
-                    n_iter=10, 
-                    scoring='neg_mean_absolute_error',
-                    refit="neg_mean_absolute_error",
-                    cv=cv)
-
-_ = mod.fit(X_train,y_train)  
-
-# %%
-param = {'subsample': 0.6,
- 'n_estimators': 400,
- 'min_child_weight': 5,
- 'max_depth': 30,
- 'learning_rate': 0.01,
- 'lambda': 0.8999999999999999,
- 'gamma': 6,
- 'colsample_bytree': 1.0,
- 'alpha': 0.7000000000000001}
-
-clf = xgb.XGBRegressor(random_state=0, **param)
-
-clf.fit(X_train,y_train)
-
-print(r2_score(y_test,clf.predict(X_test)))
-
-feature_names = train.drop(columns='error').columns
-mdi_importances = pd.Series(
-    clf.feature_importances_, index=feature_names).sort_values(ascending=True)
-mdi_importances.plot.barh()
-plt.show()
 
 #%%
 # initial hyperparameter tuning
-
-param = [
-    # knn
-    {'clf__n_neighbors': [2,3,5,8,10], 
-     'clf__weights': ['uniform', 'distance'], 'clf__leaf_size':[10,20,30,50] },
-    # dt
-    {'max_depth': [5,10,20,30],'min_samples_split':[2,4,6,8],'min_samples_leaf':[1,2,4,6],
-     'class_weight':['balanced',{0: 1.0, 1: 10.0},{0: 1.0, 1: 20.0},{0: 1.0, 1: 50.0}],
-     'criterion':['gini','entropy','log_loss']},
-    # RF
-    {"n_estimators": [64, 100, 200,400], 
-     'class_weight':['balanced',{0: 1.0, 1: 10.0},{0: 1.0, 1: 20.0},{0: 1.0, 1: 50.0}],
-                                 "max_depth":[5,10,20,30],
-                                          "min_samples_split":range(2,9),
-                                         "min_samples_leaf":range(1,8)},
-    # bagging
-    {"clf__n_estimators": [64, 100, 200,400,600],'clf__max_samples':[1,3,5,8],'clf__max_features':[1,3,5,8]},
-    # MLP
-    {"clf__hidden_layer_sizes": [50,100,200,400], 
-                                "clf__activation": ['identity', 'logistic', 'tanh', 'relu'],
-                                          "clf__learning_rate_init":np.arange(0.0001,0.002,0.0003)},
-    #Ada
-    {'clf__n_estimators': [10,20,50,100], 'clf__learning_rate':[.01,.1,1,2]},
-    
-    # logistic
-    {
-     'class_weight':['balanced',{0: 1.0, 1: 10.0},{0: 1.0, 1: 20.0},{0: 1.0, 1: 50.0}]},
-    #xgb
-    {"learning_rate": [0.5, 0.25, 0.1, 0.05, 0.01,.001], 
-                                "n_estimators": [64, 100, 200,400,600],
-                                "max_depth":[5,10,20,30],
-                                 'min_child_weight': [1, 5, 10],
-                                 'gamma': [1, 1.5, 2, 5,6],
-                                 'subsample': [0.6, 0.8, 1.0],
-                                 'colsample_bytree': [0.6, 0.8, 1.0],
-                                'scale_pos_weight':[10,20,30,50]},
-    #gbc
-    {"clf__learning_rate": [1, 0.5, 0.25, 0.1, 0.05, 0.01], 
-                                "clf__n_estimators": [64, 100, 200,400],
-                                "clf__max_depth":range(1,11),
-                                          "clf__min_samples_split":range(2,8),
-                                          "clf__min_samples_leaf":range(1,8)},
-    # SVC
-    {'C': [0.1, 1, 10, 100],'class_weight':['balanced',{0: 1.0, 1: 10.0},{0: 1.0, 1: 20.0},{0: 1.0, 1: 50.0}],
-     'kernel':['linear', 'poly', 'rbf', 'sigmoid']} 
-]
-
+from hyperparam import param
+param = param
 hyp = []
 for name, clf, param in zip(names, classifiers, param):
-
+    print(name)
     clf = clf
 
     mod = RandomizedSearchCV(estimator=clf,
                        param_distributions = param,
-                       n_iter=10, 
-                       scoring=['average_precision',"f1",'precision','recall'],
-                       refit="average_precision",
+                       n_iter=15, 
+                       scoring='neg_mean_absolute_error',
+                       refit='neg_mean_absolute_error',
                        cv=cv)
 
     _ = mod.fit(X_train,y_train)  
 
-    hyp.append([name, 
-                pd.DataFrame(mod.cv_results_).sort_values('mean_test_average_precision',
-                                                          ascending=False).iloc[0].params,
-                               pd.DataFrame(mod.cv_results_).sort_values('mean_test_average_precision',
-                                                          ascending=False).iloc[0].mean_test_average_precision,
-                                              pd.DataFrame(mod.cv_results_).sort_values('mean_test_average_precision',
-                                                          ascending=False).iloc[0].mean_test_f1,
-               pd.DataFrame(mod.cv_results_).sort_values('mean_test_average_precision',
-                                                          ascending=False).iloc[0].mean_test_precision,
-               pd.DataFrame(mod.cv_results_).sort_values('mean_test_average_precision',
-                                                          ascending=False).iloc[0].mean_test_recall])
+
+    print(pd.DataFrame(mod.cv_results_).sort_values('rank_test_score').params.iloc[0])
+    hyp.append(pd.DataFrame(mod.cv_results_).sort_values('rank_test_score').params.iloc[0])
+
+
+# %%
+param = [#Nearest Neighbors
+{'leaf_size': 55, 'n_neighbors': 34, 'p': 2, 'weights': 'uniform'},
+#Decision Tree
+{'max_depth': 13, 'min_samples_leaf': 8, 'min_samples_split': 8},
+
+#Random Forest
+{'bootstrap': False, 'max_depth': 32, 'max_features': 'sqrt', 'min_samples_leaf': 10, 'min_samples_split': 8, 'n_estimators': 76},
+#Bagged Tree
+{'max_features': 0.8556277572937148, 'max_samples': 0.6537113949138937, 'n_estimators': 54},
+#Neural Net
+{'activation': 'tanh', 'alpha': 0.008705799756697682, 'hidden_layer_sizes': 120, 'learning_rate': 'invscaling', 'learning_rate_init': 0.03574510193293592, 'max_iter': 926, 'solver': 'sgd'},
+#AdaBoost
+{'learning_rate': 0.10744518516445699, 'n_estimators': 298},
+
+#xgboost
+{'colsample_bytree': 0.9897619999843497, 'gamma': 0.2895269462694678, 'learning_rate': 0.025705445295337102, 'max_depth': 3, 'min_child_weight': 1, 'n_estimators': 315, 'reg_alpha': 0.1980621551139078, 'reg_lambda': 0.8096303523179117, 'subsample': 0.6598150064654535},
+
+#Gradient Boosting
+{'learning_rate': 0.0838805794537557, 'max_depth': 6, 'max_features': 'log2', 'min_samples_leaf': 13, 'min_samples_split': 18, 'n_estimators': 91},
+
+#SVC
+{'C': 6.402095318891977, 'degree': 5, 'epsilon': 0.14055757662783375, 'gamma': 'scale', 'kernel': 'linear'}
+
+]
+# %%
+param = hyp
+# add parameters to model
+classifiers = [
+    KNeighborsRegressor(**param[0]),
+    DecisionTreeRegressor(random_state=0,**param[1]),
+    RandomForestRegressor(random_state=0,**param[2]),
+    BaggingRegressor(random_state=0,**param[3]),
+    MLPRegressor(random_state=0,**param[4]),
+    AdaBoostRegressor(random_state=0,**param[5]),
+
+    xgb.XGBRegressor(random_state=0,**param[6]),
+    GradientBoostingRegressor(random_state=0,**param[7]),
+    SVR(**param[8])
+]
 # %%
