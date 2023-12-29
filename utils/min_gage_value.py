@@ -11,14 +11,14 @@ import glob
 #import cartopy.crs as ccrs
 
 from CPF import *
-from grizzly import *
+from utils.clean_gage_data.grizzly import *
 from coagmet import *
 from disdrometer import *
-from mrms_gage import *
+from archive.mrms_gage import *
 from usgs_other import *
 from elevation import *
 from usgs_new import *
-from ET import *
+from delete.ET import *
 
 # Create a path to the code file
 codeDir = os.path.dirname(os.path.abspath(os.getcwd()))

@@ -40,18 +40,21 @@ for entry in data_list:
         year_lat[year].append(lat)
         year_lon[year].append(lon)
 
-filepath_rate = '2min_rate_cat_month_CO\\'
-filepath_rqi = 'RQI_2min_cat_month_CO\\'
+filepath_rate = 'MRMS\\2min_rate_cat_month_CO\\'
+filepath_rqi = 'MRMS\\RQI_2min_cat_month_CO\\'
+filepath_storm = 'storm_stats\\'
 rate = 'rate.nc'
 rqi = 'rqi.nc'
+storm = 'storm_id.nc'
 
 # %%
 for i in range(2018,2024):
     print(i)
     # open rate files for year
-    mrms_folder = os.path.join('..','..','..','MRMS',filepath_rqi)
-    filenames_rate = glob.glob(mrms_folder+str(i)+'*.grib2')
-    rate = xr.open_mfdataset(filenames_rate, engine = "cfgrib",chunks={'time': '500MB'})
+    mrms_folder = os.path.join('..','..','..',filepath_storm)
+    filenames_rate = glob.glob(mrms_folder+str(i)+'*.nc')
+    print(filenames_rate)
+    rate = xr.open_mfdataset(filenames_rate, chunks={'time': '500MB'})
     # save where gage record exists
     lat = year_lat.get(i)
     lon = year_lon.get(i)
@@ -64,6 +67,6 @@ for i in range(2018,2024):
     print(len(rate.latitude)) # how many gages exist in same mrms px?
     print(len(rate.longitude)) # how many gages exist in same mrms px?
     # save
-    name = str(i)+'_gage_only_'+rqi
+    name = str(i)+'_gage_only_'+storm
     rate.to_netcdf(path=name)
 # %%

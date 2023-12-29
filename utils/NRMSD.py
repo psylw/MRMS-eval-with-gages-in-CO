@@ -21,10 +21,10 @@ def nrmsd(df):
         gm['dt'] = datetime_index
         
         gm = gm.set_index('dt',drop=True)
-        # only look at samples where positive
         
+        # resample to 10min to decrease temporal sampling error
         gm = gm.resample('10min').max()
-        
+        # only look at samples where positive
         gm = gm.loc[(gm.gage>0)|(gm.mrms>0)]
 
         g = gm.gage.values

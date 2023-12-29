@@ -23,33 +23,26 @@ from sklearn.metrics import  mean_absolute_error,r2_score
 
 # open both window values
 #file_path = os.path.join('..', '..', 'train_test')
-file_path = os.path.join( 'output', 'train_test_rawRMSE')
+file_path = os.path.join( 'output', 'train_test')
 df = pd.read_feather(file_path)
-
+#%%
 df = df.dropna()
 
 #  %%
-'''import sys
-
-sys.path.append('class')
-
-from NRMSD import nrmsd
-
-test = pd.read_feather('Z:\working code\MRMS-eval-with-gages-in-CO\output\window_values_new')
-test = test.loc[test.total_mrms_accum>0].dropna().reset_index(drop=True)
-test['mrms_lat'] = [test.mrms_lat[i][0] for i in test.index]
-test['mrms_lon'] = [test.mrms_lon[i][0] for i in test.index]
-df['norm_diff'] = nrmsd(test)
-
-df.reset_index(drop=True).to_feather('train_test_rawRMSE')'''
-
+# add rmse
+test = pd.read_feather('output\window_values_new')
+test = test.loc[test.total_mrms_accum>0].reset_index(drop=True)
+(df.total_mrms_accum-test.total_mrms_accum).max()
+df[['rqi_mean', 'rqi_median', 'rqi_min', 'rqi_max',
+       'rqi_std', 'norm_diff']] = test[['rqi_mean', 'rqi_median', 'rqi_min', 'rqi_max',
+       'rqi_std', 'norm_diff']]
 
 # %%
 
 #df = df.loc[(df.total_mrms_accum>1)].reset_index(drop=True)
 
 df['norm_diff'] = df.norm_diff/df.max_mrms
-df = df.loc[(df.total_mrms_accum>1)&(df.norm_diff<4)].reset_index(drop=True)
+df = df.loc[(df.total_mrms_accum>1)].reset_index(drop=True)
 # remove correlated features...do this in different file 
 # %%
 df = df.drop(columns=['max_mrms',
