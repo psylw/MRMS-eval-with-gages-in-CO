@@ -5,21 +5,13 @@ import matplotlib.pyplot as plt
 import os
 import rioxarray as rxr
 from datetime import timedelta
-import sys
 
-sys.path.append('class')
-
-from NRMSD import nrmsd
 
 #%%
-#####################################################################################################################   CALCULATE MCE and save
+#####################################################################################################################   OPEN WINDOW VALUES
 
 compare = pd.read_feather('output/window_values_new')
 
-# %%
-#compare['norm_diff'] = nrmsd(compare)
-
-#compare.to_feather('output/window_values_new')
 
 # %%
 #####################################################################################################################   REMOVE SAMPLES WHERE NOTHING HAPPENING FOR MRMS
@@ -39,7 +31,7 @@ compare['end']=[compare['start'][i]+timedelta(minutes=compare.len_m[i].astype('f
 # %%
 # MAX INTENSITY
 compare['max_mrms']=[np.max(compare.mrms_15_int[i]) for i in range(len(compare))]
-compare['max_gage']=[np.max(compare['15_int'][i]) for i in range(len(compare))]
+
 # %%
 # MAX ACCUM
 compare['max_accum_atgage']=[pd.DataFrame(compare.mrms_accum[i]).max()[0] for i in range(len(compare))]
@@ -95,50 +87,7 @@ compare['duration']=[compare.duration[i].loc[compare.duration[i][0]>0].index[-1]
 compare['month']=[compare['start'][i].month for i in range(len(compare))]
 # hour
 compare['hour']=[compare['start'][i].hour for i in range(len(compare))]
-#%%
-compare = pd.read_feather('output\\window_values_new')
 
-#####################################################################################################################   RESTART AND CONTINUE
-compare = pd.read_feather(parentDir+'\\intermediate_datadev')
-
-# bring in RQI
-# open RQI for 2021,2022
-RQI_folder = os.path.join(parentDir,"MRMS","RQI_cat_yr_CO")
-filenames_RQI = glob.glob(RQI_folder+'\\'+'*.grib2')
-
-RQI = xr.open_mfdataset(filenames_RQI,engine = "cfgrib",chunks={'time': '50MB'})
-
-# get times and gage locations
-#RQI = RQI.sel(longitude=lon,latitude=lat,drop=True)
-
-RQI = RQI.where(RQI>=0)
-RQI = RQI.where(RQI.longitude<=256,drop=True)
-
-RQI = RQI.sel(longitude=lon,latitude=lat,method='nearest',drop=True)
-RQI = RQI.drop_duplicates(dim=['latitude','longitude'])
-
-RQI = RQI.sortby(RQI.latitude)
-RQI = RQI.sortby(RQI.longitude)
-
-
-r = []
-for i in range(len(compare)):
-    # select mrms at coordinate
-    r_g = RQI.sel(longitude=compare.longitude[i],latitude=compare.latitude[i],drop=True,method='nearest')
-    x = r_g.sel(time=slice(compare.start[i].round('H'),compare.end[i].round('H'))).unknown.values
-    r.append(np.min(x[x>=0]))
-    print(i/len(compare))
-# add to database
-compare['RQI']=r
-compare['RQI']
-
-#%%
-
-#####################################################################################################################   RESTART AND CONTINUE
-
-compare = pd.read_feather(parentDir+'\\intermediate_datadev')
-
-compare = compare.drop(columns=['index','level_0'])
 # %%
 elev = '\\CO_SRTM1arcsec__merge.tif'
 data_folder = os.path.join('..','..','elev_data')
@@ -149,7 +98,7 @@ codtm = codtm.assign_coords(x=(((codtm.x + 360))))
 
 codtm = codtm.rename({'x':'longitude','y':'latitude'})
 
-elevation = [codtm.sel(longitude=compare.mrms_lon[i][0],latitude=compare.mrms_lat[i][0],
+elevation = [codtm.sel(longitude=compare.mrms_lon[i],latitude=compare.mrms_lat[i],
                        method='nearest').values[0] for i in range(len(compare))]
 #elevation = codtm.sel(longitude=lon,latitude=lat,method='nearest')
 compare['point_elev']=elevation
@@ -164,7 +113,7 @@ coslope = coslope.assign_coords(x=(((coslope.x + 360))))
 coslope = coslope.rename({'x':'longitude','y':'latitude'})
 
 #slope = coslope.sel(longitude=lon,latitude=lat,method='nearest')
-slope = [coslope.sel(longitude=compare.mrms_lon[i][0],latitude=compare.mrms_lat[i][0],
+slope = [coslope.sel(longitude=compare.mrms_lon[i],latitude=compare.mrms_lat[i],
                      method='nearest').values[0] for i in range(len(compare))]
 
 
@@ -181,17 +130,15 @@ codtm = codtm.assign_coords(x=(((codtm.x + 360))))
 
 codtm = codtm.rename({'x':'longitude','y':'latitude'})
 
-aspect = [codtm.sel(longitude=compare.mrms_lon[i][0],latitude=compare.mrms_lat[i][0],
+aspect = [codtm.sel(longitude=compare.mrms_lon[i],latitude=compare.mrms_lat[i],
                        method='nearest').values[0] for i in range(len(compare))]
 compare['point_aspect']=aspect
 #%%
-compare['mrms_lat'] = [compare.mrms_lat[i][0] for i in compare.index]
-compare['mrms_lon'] = [compare.mrms_lon[i][0] for i in compare.index]
+
 #####################################################################################################################   SAVE
-compare = compare.drop(columns=['level_0', 'index', 'start', 'accum', '15_int', 'gage_lat', 'gage_lon',
+compare = compare.drop(columns=['index',  'accum', '15_int', 'gage_lat', 'gage_lon',
        'gage_source', 'mrms_accum', 'mrms_15_int', 
-       'total_gage_accum',  'len_m', 'end',
-       'max_gage'])
+       'total_gage_accum',  'len_m', 'end'])
 #%%
-compare.to_feather('output\\train_test')
+compare.to_feather('output\\train_test2')
 # %%

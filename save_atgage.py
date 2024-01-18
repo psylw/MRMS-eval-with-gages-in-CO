@@ -11,7 +11,7 @@ import glob
 import pickle
 
 ##################   IMPORT GAGE DATA   ###################################################################################################
-
+#%%
 with open('test//gage_all.pickle', 'rb') as file:
     gage = pickle.load(file)
 
@@ -39,7 +39,7 @@ for entry in data_list:
     else:
         year_lat[year].append(lat)
         year_lon[year].append(lon)
-
+#%%
 filepath_rate = 'MRMS\\2min_rate_cat_month_CO\\'
 filepath_rqi = 'MRMS\\RQI_2min_cat_month_CO\\'
 filepath_storm = 'storm_stats\\'
@@ -48,11 +48,11 @@ rqi = 'rqi.nc'
 storm = 'storm_id.nc'
 
 # %%
-for i in range(2018,2024):
+for i in range(2023,2024):
     print(i)
     # open rate files for year
-    mrms_folder = os.path.join('..','..','..',filepath_storm)
-    filenames_rate = glob.glob(mrms_folder+str(i)+'*.nc')
+    mrms_folder = os.path.join('..','..','..',filepath_rqi)
+    filenames_rate = glob.glob(mrms_folder+str(i)+'*.grib2')
     print(filenames_rate)
     rate = xr.open_mfdataset(filenames_rate, chunks={'time': '500MB'})
     # save where gage record exists
@@ -67,6 +67,6 @@ for i in range(2018,2024):
     print(len(rate.latitude)) # how many gages exist in same mrms px?
     print(len(rate.longitude)) # how many gages exist in same mrms px?
     # save
-    name = str(i)+'_gage_only_'+storm
+    name = str(i)+'_gage_only_'+rqi
     rate.to_netcdf(path=name)
 # %%

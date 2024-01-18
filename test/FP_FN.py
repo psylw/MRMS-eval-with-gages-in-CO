@@ -1,15 +1,23 @@
+#%%
+
 import pandas as pd
 
 #import pandas as pd
-compare = pd.read_feather('window_values_FN')
-
+df = pd.read_feather('../output/window_values_new')
+#%%
+df = df.loc[(df.mrms_lat!=40.57499999999929)&(df.mrms_lon!=254.91499899999639)]
+print(len(df))
+df = df.dropna()
+print(len(df))
+#%%
 # open window values
 accumulation_threshold = 1
-compare = compare.loc[(compare.total_accum_atgage>accumulation_threshold)|(compare.total_gage_accum>accumulation_threshold)]
+df = df.loc[(df.total_mrms_accum>accumulation_threshold)|(df.total_gage_accum>accumulation_threshold)]
 
-compare['onoff'] = 0
-compare.loc[(compare.total_accum_atgage>0)&(compare.total_gage_accum>0),['onoff']]='TP'
-compare.loc[(compare.total_accum_atgage==0)&(compare.total_gage_accum>0),['onoff']]='FN'
-compare.loc[(compare.total_accum_atgage>0)&(compare.total_gage_accum==0),['onoff']]='FP'
+df['onoff'] = 0
+df.loc[(df.total_mrms_accum>0)&(df.total_gage_accum>0),['onoff']]='TP'
+df.loc[(df.total_mrms_accum==0)&(df.total_gage_accum>0),['onoff']]='FN'
+df.loc[(df.total_mrms_accum>0)&(df.total_gage_accum==0),['onoff']]='FP'
 
-compare.groupby('onoff').count()/len(compare)
+df.groupby('onoff').count()/len(df)
+# %%

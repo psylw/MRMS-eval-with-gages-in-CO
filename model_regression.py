@@ -2,6 +2,7 @@
 import random
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 import sys
 import os
 import numpy as np
@@ -10,109 +11,109 @@ import xgboost as xgb
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.svm import SVR
-
+from sklearn.linear_model import LinearRegression
 from sklearn.neural_network import MLPRegressor
 
 from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor, AdaBoostRegressor, BaggingRegressor
 
 from sklearn.model_selection import train_test_split,cross_validate,cross_val_predict,RandomizedSearchCV
 
-from sklearn.metrics import  mean_absolute_error,r2_score
+from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mean_squared_error
+from model_input import model_input
+
+df = pd.read_feather('output/train_test2')
+
+df['norm_diff'] = np.load('nRMSE.npy')
+#df = df.drop(columns=(['median_int_point','mean_int_point','mean_accum_point','median_accum_point']))
+
+cv,test,train,X_train, X_test, y_train, y_test, all_permutations, plot = model_input(df)
+# %%
+'''max_corr=[]
+for i in range(len(all_permutations)):
+
+    pltcorr = df.drop(columns=['start','storm_id','norm_diff']).iloc[:,list(all_permutations[i])]
+
+    correlation_matrix = pltcorr.corr(method='spearman').abs()
+    max_corr.append(np.max(correlation_matrix.values[correlation_matrix.values < 1]))
+
+print(np.max(max_corr))'''
 
 # %%
+names = [
+    "Nearest Neighbors",
+    "Decision Tree",
+    "Random Forest",
+    "Bagged Tree",
+    "Neural Net",
+    "AdaBoost",
+    "linear",
+    "xgboost",
+    "Gradient Boosting",
+    "SVC"
+]
 
-# open both window values
-#file_path = os.path.join('..', '..', 'train_test')
-file_path = os.path.join( 'output', 'train_test')
-df = pd.read_feather(file_path)
+classifiers = [
+    KNeighborsRegressor(),
+    DecisionTreeRegressor(random_state=0),
+    RandomForestRegressor(random_state=0,n_jobs=-1),
+    BaggingRegressor(random_state=0,n_jobs=-1),
+    MLPRegressor(random_state=0),
+    AdaBoostRegressor(random_state=0),
+    LinearRegression(),
+    xgb.XGBRegressor(random_state=0,n_jobs=-1),
+    GradientBoostingRegressor(random_state=0),
+    SVR()
+]
+# %%
+# RANDOMLY SAMPLE UNCORRELATED FEATURES TO SEE WHICH PERFORMS BEST
+SAMPLE_permutations = random.sample(all_permutations, 10)
+scores = []
+
+for name, clf in zip(names, classifiers):
+    print(name)
+    for idx,perm in enumerate(SAMPLE_permutations):
+        x = cross_validate(clf,X_train[:,perm],y_train, cv = cv,
+                        scoring=['r2','neg_mean_absolute_error','neg_mean_squared_error','neg_root_mean_squared_error'])
+        print(idx)
+        print(x['test_r2'])
+        print(x['test_neg_mean_absolute_error'])
+        print(x['test_neg_mean_squared_error'])
+        print(x['test_neg_root_mean_squared_error'])
+
+        print(x['test_r2'].mean())
+        print(x['test_neg_mean_absolute_error'].mean())
+        print(x['test_neg_mean_squared_error'].mean())
+        print(x['test_neg_root_mean_squared_error'].mean())
+
+        print(x['test_r2'].std())
+        print(x['test_neg_mean_absolute_error'].std())
+        print(x['test_neg_mean_squared_error'].std())
+        print(x['test_neg_root_mean_squared_error'].std())
+
+        scores.append([name,idx,
+                       x['test_r2'].mean(),
+                       x['test_r2'].std(),
+                       x['test_neg_mean_absolute_error'].mean(),
+                       x['test_neg_mean_absolute_error'].std(),
+                       x['test_neg_mean_squared_error'].mean(),
+                       x['test_neg_mean_squared_error'].std(),                                                                               x['test_neg_root_mean_squared_error'].mean(),
+                       x['test_neg_root_mean_squared_error'].std()])
+
+scores = pd.DataFrame(scores,columns=['names','IDX',
+                              'test_r2_mean','test_r2_std',
+                              'test_neg_mean_absolute_error_mean','test_neg_mean_absolute_error_std',
+                              'test_neg_mean_squared_error_mean','test_neg_mean_squared_error_std',
+                              'test_neg_root_mean_squared_error_mean','test_neg_root_mean_squared_error_std'])
+# %%
+# select optimal noncorrelated permutation per model
+model_perm = []
+for i in names:
+    model_perm.append([i,scores.loc[scores.names==i].sort_values('test_neg_mean_absolute_error_mean').IDX.iloc[-1]])
+
+model_perm = pd.DataFrame(data=model_perm,columns=['idx','name'])
+
 #%%
-df = df.dropna()
-
-#  %%
-# add rmse
-test = pd.read_feather('output\window_values_new')
-test = test.loc[test.total_mrms_accum>0].reset_index(drop=True)
-(df.total_mrms_accum-test.total_mrms_accum).max()
-df[['rqi_mean', 'rqi_median', 'rqi_min', 'rqi_max',
-       'rqi_std', 'norm_diff']] = test[['rqi_mean', 'rqi_median', 'rqi_min', 'rqi_max',
-       'rqi_std', 'norm_diff']]
-
-# %%
-
-#df = df.loc[(df.total_mrms_accum>1)].reset_index(drop=True)
-
-df['norm_diff'] = df.norm_diff/df.max_mrms
-df = df.loc[(df.total_mrms_accum>1)].reset_index(drop=True)
-# remove correlated features...do this in different file 
-# %%
-df = df.drop(columns=['max_mrms',
-       'max_accum_atgage',  'std_int_point',
-       'var_int_point', 'mean_int_point', 'median_accum_point',
-       'std_accum_point', 'var_accum_point', 'mean_accum_point'])
-
-# %%
-grouped = df.groupby(['mrms_lat','mrms_lon']).count().total_mrms_accum
-weights = 1.0 / grouped
-
-test = grouped.sample(frac=.25,weights = weights, random_state=0).reset_index()
-
-test_lat,test_lon = test.mrms_lat,test.mrms_lon
-test = df.loc[(df.mrms_lat.isin(test_lat))&(df.mrms_lon.isin(test_lon))]
-train = df.loc[~df.index.isin(test.index)]
-print(len(test)/len(df))
-print(len(train)/len(df))
-
-# %%
-n_splits = 5
-split_idx = []
-
-train = train.reset_index(drop=True)
-sample = train
-
-for i in range(n_splits):
-    test_s = sample.groupby(['mrms_lat','mrms_lon']).count().total_mrms_accum
-
-    weights = 1.0 / grouped
-
-    split = test_s.sample(frac=1/(n_splits-i), weights=weights,random_state=200).reset_index()
-
-    split_lat,split_lon = split.mrms_lat,split.mrms_lon
-    
-    split = sample.loc[(sample.mrms_lat.isin(split_lat))&(sample.mrms_lon.isin(split_lon))]
-    
-    split_idx.append(split.index)
-    print(len(split.index)/len(train))
-    sample = sample.loc[~sample.index.isin(split.index)]
-#%%
-'''for i in range(n_splits):
-    fold_test_idx = split_idx[i]
-
-    x1,y1 = train.iloc[fold_test_idx].mrms_lon,train.iloc[fold_test_idx].mrms_lat
-
-    plt.scatter(x1,y1,label=str(i))
-    
-    plt.legend()
-
-plt.scatter(test.mrms_lon,test.mrms_lat,label='test')'''
-
-#%%
-cv = []
-
-for i in range(n_splits):
-    fold_test_idx = split_idx[i]
-    fold_train_idx = train.loc[~train.index.isin(fold_test_idx)].index
-    cv.append([fold_train_idx,fold_test_idx])
-
-# %%
-scaler = StandardScaler()
-X_train, X_test, y_train, y_test = (scaler.fit_transform(train.drop(columns=['norm_diff'])),
-                                    
-scaler.fit_transform(test.drop(columns=['norm_diff'])),
-train.norm_diff.values,
-test.norm_diff.values)
-
-
-# %%
+# initial hyperparameter tuning
 names = [
     "Nearest Neighbors",
     "Decision Tree",
@@ -128,113 +129,128 @@ names = [
 
 classifiers = [
     KNeighborsRegressor(),
-    DecisionTreeRegressor(random_state=0),
-    RandomForestRegressor(random_state=0),
-    BaggingRegressor(random_state=0),
-    MLPRegressor(random_state=0),
-    AdaBoostRegressor(random_state=0),
+    DecisionTreeRegressor(),
+    RandomForestRegressor(n_jobs=-1),
+    BaggingRegressor(n_jobs=-1),
+    MLPRegressor(),
+    AdaBoostRegressor(),
 
-    xgb.XGBRegressor(random_state=0),
-    GradientBoostingRegressor(random_state=0),
+    xgb.XGBRegressor(n_jobs=-1),
+    GradientBoostingRegressor(),
     SVR()
 ]
+
+from hyperparam import param
+param = param
+hyp = {}
+for name, clf, param in zip(names, classifiers, param):
+    print(name)
+    clf = clf
+    idx = model_perm.loc[model_perm.idx==name].name.values[0]
+    mod = RandomizedSearchCV(estimator=clf,
+                       param_distributions = param,
+                       n_iter=15, 
+                       scoring=['r2','neg_mean_absolute_error','neg_mean_squared_error','neg_root_mean_squared_error'],
+                       refit='neg_mean_absolute_error',
+                       cv=cv)
+
+    _ = mod.fit(X_train[:,SAMPLE_permutations[idx]],y_train)  
+
+    hyp[name] = pd.DataFrame(mod.cv_results_).sort_values('rank_test_neg_mean_absolute_error')
+
 # %%
-feature_names = train.drop(columns='norm_diff').columns
+
+# add parameters to model
+classifiers = [
+    KNeighborsRegressor(**hyp[names[0]].params[0]),
+    DecisionTreeRegressor(**hyp[names[1]].params[0]),
+    RandomForestRegressor(**hyp[names[2]].params[0]),
+    BaggingRegressor(**hyp[names[3]].params[0]),
+    MLPRegressor(**hyp[names[4]].params[0]),
+    AdaBoostRegressor(**hyp[names[5]].params[0]),
+    LinearRegression(),
+    xgb.XGBRegressor(**hyp[names[6]].params[0]),
+    GradientBoostingRegressor(**hyp[names[7]].params[0]),
+    SVR(**hyp[names[8]].params[0])
+]
+
+names = [
+    "Nearest Neighbors",
+    "Decision Tree",
+    "Random Forest",
+    "Bagged Tree",
+    "Neural Net",
+    "AdaBoost",
+    "linear",
+    "xgboost",
+    "Gradient Boosting",
+    "SVC"
+]
+
+# %%
+# what do test results look like?
+#feature_names = train.drop(columns='norm_diff').columns
 
 for name, clf in zip(names, classifiers):
-    clf.fit(X_train,y_train)
+    idx = model_perm.loc[model_perm.idx==name].name.values[0]
+    f, ax = plt.subplots(figsize=(6, 6))
+    clf.fit(X_train[:,SAMPLE_permutations[idx]],y_train)
     '''    mdi_importances = pd.Series(
     clf.feature_importances_, index=feature_names).sort_values(ascending=True)
     mdi_importances.plot.barh()
     plt.show()'''
-    ypred = clf.predict(X_test)
+    ypred = clf.predict(X_test[:,SAMPLE_permutations[idx]])
 
     print(name)
     print(r2_score(y_test,ypred))
     print(mean_absolute_error(y_test,ypred))
 
-    plt.scatter(y_test,ypred)
-    #plt.xlim(0,25)
-    #plt.ylim(0,25)
+    sns.scatterplot(x=y_test, y=ypred, s=5, color=".15")
+    sns.histplot(x=y_test, y=ypred, bins=50, pthresh=.1, cmap="mako")
+    sns.kdeplot(x=y_test, y=ypred, levels=5, color="w", linewidths=1)
+    plt.xlim(0,25)
+    plt.ylim(0,25)
     plt.plot([0,25],[0,25],color='red')
     plt.title(name)
     plt.show()
 
+
 # %%
-# baseline
-r2=[]
+from sklearn.inspection import permutation_importance
+# compare train/test permutation feature importance for each model, look for consistency and overfitting
+param = {'learning_rate': 0.09318794343729946,
+ 'max_depth': 6,
+ 'max_features': None,
+ 'min_samples_leaf': 10,
+ 'min_samples_split': 5,
+ 'n_estimators': 77,
+ 'random_state': 781}
 
-for name, clf in zip(names, classifiers):
-    print(name)
-    x = cross_validate(clf,X_train,y_train, cv = cv,
-                     scoring='r2')
-    print(x['test_score'])
-    r2.append([name,x['test_score'].mean(),x['test_score'].std()])
+clf = GradientBoostingRegressor(**param)
+clf.fit(X_train[:,SAMPLE_permutations[1]], y_train)
 
-r2 = pd.DataFrame(r2,columns=['names','r2','std']).sort_values(['r2'])
-
-
+train_result = permutation_importance(
+    clf, X_train[:,SAMPLE_permutations[1]], y_train, n_repeats=10, random_state=42, n_jobs=2, scoring='neg_mean_absolute_error'
+)
+test_results = permutation_importance(
+    clf, X_test[:,SAMPLE_permutations[1]], y_test, n_repeats=10, random_state=42, n_jobs=2,scoring='neg_mean_absolute_error'
+)
+sorted_importances_idx = train_result.importances_mean.argsort()
 #%%
-# initial hyperparameter tuning
-from hyperparam import param
-param = param
-hyp = []
-for name, clf, param in zip(names, classifiers, param):
-    print(name)
-    clf = clf
+train_importances = pd.DataFrame(
+    train_result.importances[sorted_importances_idx].T,
+    columns=train.iloc[:,list(SAMPLE_permutations[1])].columns[sorted_importances_idx],
+)
+test_importances = pd.DataFrame(
+    test_results.importances[sorted_importances_idx].T,
+    columns=test.iloc[:,list(SAMPLE_permutations[1])].columns[sorted_importances_idx],
+)
 
-    mod = RandomizedSearchCV(estimator=clf,
-                       param_distributions = param,
-                       n_iter=15, 
-                       scoring='neg_mean_absolute_error',
-                       refit='neg_mean_absolute_error',
-                       cv=cv)
+for name, importances in zip(["train", "test"], [train_importances, test_importances]):
+    ax = importances.plot.box(vert=False, whis=10)
+    ax.set_title(f"Permutation Importances ({name} set)")
+    ax.set_xlabel("Decrease in accuracy score")
+    ax.axvline(x=0, color="k", linestyle="--")
+    ax.figure.tight_layout()
 
-    _ = mod.fit(X_train,y_train)  
-
-
-    print(pd.DataFrame(mod.cv_results_).sort_values('rank_test_score').params.iloc[0])
-    hyp.append(pd.DataFrame(mod.cv_results_).sort_values('rank_test_score').params.iloc[0])
-
-
-# %%
-param = [#Nearest Neighbors
-{'leaf_size': 55, 'n_neighbors': 34, 'p': 2, 'weights': 'uniform'},
-#Decision Tree
-{'max_depth': 13, 'min_samples_leaf': 8, 'min_samples_split': 8},
-
-#Random Forest
-{'bootstrap': False, 'max_depth': 32, 'max_features': 'sqrt', 'min_samples_leaf': 10, 'min_samples_split': 8, 'n_estimators': 76},
-#Bagged Tree
-{'max_features': 0.8556277572937148, 'max_samples': 0.6537113949138937, 'n_estimators': 54},
-#Neural Net
-{'activation': 'tanh', 'alpha': 0.008705799756697682, 'hidden_layer_sizes': 120, 'learning_rate': 'invscaling', 'learning_rate_init': 0.03574510193293592, 'max_iter': 926, 'solver': 'sgd'},
-#AdaBoost
-{'learning_rate': 0.10744518516445699, 'n_estimators': 298},
-
-#xgboost
-{'colsample_bytree': 0.9897619999843497, 'gamma': 0.2895269462694678, 'learning_rate': 0.025705445295337102, 'max_depth': 3, 'min_child_weight': 1, 'n_estimators': 315, 'reg_alpha': 0.1980621551139078, 'reg_lambda': 0.8096303523179117, 'subsample': 0.6598150064654535},
-
-#Gradient Boosting
-{'learning_rate': 0.0838805794537557, 'max_depth': 6, 'max_features': 'log2', 'min_samples_leaf': 13, 'min_samples_split': 18, 'n_estimators': 91},
-
-#SVC
-{'C': 6.402095318891977, 'degree': 5, 'epsilon': 0.14055757662783375, 'gamma': 'scale', 'kernel': 'linear'}
-
-]
-# %%
-param = hyp
-# add parameters to model
-classifiers = [
-    KNeighborsRegressor(**param[0]),
-    DecisionTreeRegressor(random_state=0,**param[1]),
-    RandomForestRegressor(random_state=0,**param[2]),
-    BaggingRegressor(random_state=0,**param[3]),
-    MLPRegressor(random_state=0,**param[4]),
-    AdaBoostRegressor(random_state=0,**param[5]),
-
-    xgb.XGBRegressor(random_state=0,**param[6]),
-    GradientBoostingRegressor(random_state=0,**param[7]),
-    SVR(**param[8])
-]
 # %%

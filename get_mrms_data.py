@@ -15,23 +15,23 @@ from datetime import timedelta
 
 # change dates and sample interval
 
-start = datetime(2020, 5, 30, 11, 34)
-end = datetime(2020, 5, 31, 23, 58)
+start = datetime(2023, 6, 1, 1, 0)
+end = datetime(2023, 6, 30, 23, 58)
 minute = timedelta(minutes=2)
 #minute = timedelta(hours=1)
 # only download certain months
-mo1 = 5
-mo2 = 5
+mo1 = 6
+mo2 = 6
 
 # indicate which product to download (rate,RQI,QPE_multi,QPE_radar)
-product = 'rate'
+product = 'RQI'
 
 # tell program where to download files ==> /data/raw
 # Create a path to the code file
 codeDir = os.path.dirname(os.path.abspath(os.getcwd()))
 # Create a path to the data folder
 # destination = os.path.join(codeDir,"data","processed")
-destination = 'C:\\Users\\GSCOB\\OneDrive - Colostate\\Desktop\\tempMRMS\\05'
+destination = 'Z:\\working code\\MRMS-eval-with-gages-in-CO\\temp'
 # Change to data folder
 os.chdir(destination)
 

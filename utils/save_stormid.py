@@ -18,7 +18,7 @@ def find_storms(mrms_ds):
     # label objects
     storm_id, count_storms = skimage.measure.label(a, connectivity=1, return_num=True)
     # remove object SMALLER than 5 px
-    storm_id = remove_small_objects(storm_id, 9)
+    #storm_id = remove_small_objects(storm_id, 9)
     
     return storm_id
 
