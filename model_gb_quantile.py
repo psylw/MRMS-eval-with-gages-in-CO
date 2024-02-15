@@ -60,6 +60,7 @@ scoring={'neg_05p': make_scorer(
     alpha=.95,
     greater_is_better=False,  # maximize the negative loss
 )}
+
 # %%
 '''for name, gbr in sorted(all_models.items()):
     print(name)
@@ -85,6 +86,7 @@ scores = pd.DataFrame(scores,columns=['names','IDX',
 # %%
 
 gbr = list(all_models.items())[1][1]
+print(gbr)
 for idx,perm in enumerate(all_permutations):
     print(idx/len(all_permutations))
     x = cross_validate(gbr,X_train[:,perm],y_train, cv = cv,
@@ -112,17 +114,18 @@ model_perm = pd.concat(model_perm,axis=1)'''
 print(scores.iloc[scores.test_score_mean.abs().argmin()])
 idx = int(scores.iloc[scores.test_score_mean.abs().argmin()].IDX)
 print(idx)
+idx = 362
 
 #%%
 # TUNE HYPERPERAMETERS FOR EACH QUANTILE
     #gbc
 param = {
-'n_estimators': randint(50, 300),  # Number of boosting stages to be run
+'n_estimators': randint(50, 250),  # Number of boosting stages to be run
 'learning_rate': uniform(0.01, .9),  # Learning rate
-'max_depth': randint(3, 10),  # Maximum depth of the individual trees
+'max_depth': randint(2, 5),  # Maximum depth of the individual trees
 'min_samples_split': randint(2, 20),  # Minimum samples required to split a node
 'min_samples_leaf': randint(1, 20),  # Minimum samples required at each leaf node
-'subsample':  [0.5, 0.7, 0.9, 1.0],
+#'subsample':  [0.5, 0.7, 0.9, 1.0],
     'random_state': randint(0,1000)  # Number of features to consider at each split
 }
 
@@ -131,7 +134,7 @@ for gbr, score in zip(list(all_models.values()),list(scoring)):
     print(score)
     mod = RandomizedSearchCV(estimator=gbr,
                        param_distributions = param,
-                       n_iter=30, 
+                       n_iter=60, 
                        scoring=scoring[score],
                        n_jobs=10,
                        random_state=42,

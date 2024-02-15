@@ -15,7 +15,7 @@ state = pd.read_feather('../output/stateclean')
 # look at median
 med = state.groupby(['mrms_lat','mrms_lon']).median()['rqi_min']
 med = med.to_xarray()
-med_std = state.groupby(['mrms_lat','mrms_lon']).std()['rqi_min']
+med_std = state.groupby(['mrms_lat','mrms_lon']).quantile(.75)['rqi_min']
 med_std = med_std.to_xarray()
 #%%
 #tell plotter what to plot
@@ -25,8 +25,9 @@ y,x = med.mrms_lat,med.mrms_lon
 
 
 plot_map2 = med_std
-name_cb2 = 'std dev of RQI min'
+name_cb2 = 'third quartile of RQI min'
 
+levels = list(np.arange(.1,.9,.1))
 
 #%%
 
@@ -52,7 +53,7 @@ cmap_data_N=[]
 for i in cmap_data:
     cmap_data_N.append([c/255 for c in i])
 
-cmap2 = LinearSegmentedColormap.from_list('custom',cmap_data_N)
+cmap2 = LinearSegmentedColormap.from_list('custom',cmap_data_N[::-1])
 
 cmap1 = LinearSegmentedColormap.from_list('custom',cmap_data_N[::-1])
 # Updated list of major cities in Colorado with their coordinates
@@ -79,7 +80,7 @@ gs = gridspec.GridSpec(2, 1, height_ratios=[1, .02], bottom=.07, top=.99,
 
 # Set plot bounds -- or just comment this out if wanting to plot the full domain
 axs[0].set_extent((-109.2, -103.5, 36.8, 41.3))
-
+axs[0].set_title('(a)')
 elev=axs[0].contourf(x,y,plot_map, cmap=cmap1,origin='upper', transform=ccrs.PlateCarree(),extend='both')
 
 
@@ -115,7 +116,7 @@ frame.set_edgecolor('white')
 ###############second plot
 #################################
 axs[1].set_extent((-109.2, -103.5, 36.8, 41.3))
-
+axs[1].set_title('(b)')
 elev=axs[1].contourf(x,y,plot_map2, cmap=cmap2,origin='upper', transform=ccrs.PlateCarree(),extend='both')
 
 

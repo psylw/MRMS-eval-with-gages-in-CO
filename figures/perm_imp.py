@@ -17,6 +17,7 @@ from sklearn.model_selection import train_test_split,cross_validate,cross_val_pr
 from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mean_squared_error,mean_pinball_loss
 sys.path.append('..')
 from model_input import model_input
+
 df = pd.read_feather('../output/train_test2')
 sys.path.append('../output')
 sys.path.append('../test')
@@ -30,7 +31,7 @@ for alpha, p in zip([0.05, 0.5, 0.95],param[0:3]):
     gbr_t = GradientBoostingRegressor(**p,loss="quantile", alpha=alpha)
     all_models["qgb_t %1.2f" % alpha] = gbr_t
 #%%
-# look at cv
+'''# look at cv
 for i in range(len(all_permutations[25])):
     print(i)
     for name, gbr in zip(all_models.keys(),list(all_models.values())):
@@ -39,12 +40,13 @@ for i in range(len(all_permutations[25])):
         p.pop(i)
         x = cross_validate(gbr,X_train[:,p],y_train, cv = cv,
                         scoring=scoring)
-        print([x['test_neg_05p'].mean(),x['test_neg_5p'].mean(),x['test_neg_95p'].mean()])
+        print([x['test_neg_05p'].mean(),x['test_neg_5p'].mean(),x['test_neg_95p'].mean()])'''
+
 # %%
 corr = ['total_mrms_accum',
 'max_mrms',
 'max_accum_atgage',
-'median_int_point',
+#'median_int_point',
 'std_int_point',
 'var_int_point',
 'mean_int_point' ,
@@ -81,10 +83,10 @@ for name, gbr,a in zip(all_models.keys(),list(all_models.values()),[0.05,.5,.95]
     )
 
     importances_train = importances_train.drop(columns=corr,errors='ignore')
-    importances_train = importances_train.rename(columns={'rqi_std':'RQI std dev', 'rqi_min': 'RQI min',
+    importances_train = importances_train.rename(columns={'median_int_point':'median int','rqi_std':'RQI std dev', 'rqi_min': 'RQI min',
        'point_aspect':'aspect', 'mrms_lat':'latitude', 'point_elev':'elevation'})
     importances_test = importances_test.drop(columns=corr,errors='ignore')
-    importances_test = importances_test.rename(columns={'rqi_std':'RQI std dev', 'rqi_min': 'RQI min',
+    importances_test = importances_test.rename(columns={'median_int_point':'median int','rqi_std':'RQI std dev', 'rqi_min': 'RQI min',
        'point_aspect':'aspect', 'mrms_lat':'latitude', 'point_elev':'elevation'})
     importances_train = importances_train.T.stack().reset_index().drop(columns='level_1').rename(columns={'level_0':'feature',0:'pi'})
     importances_train['model'] = name
@@ -99,7 +101,7 @@ for name, gbr,a in zip(all_models.keys(),list(all_models.values()),[0.05,.5,.95]
 
 #%%
 # Create a 1 by 3 subplot
-fig, axes = plt.subplots(1, 3, figsize=(14, 4), sharey=True) # Adjust the figure size as needed
+fig, axes = plt.subplots(1, 3, figsize=(16*.7, 2.5*.7), sharey=True) # Adjust the figure size as needed
 
 # Subplot 1
 
@@ -110,6 +112,12 @@ axes[0].set_xlabel('')  # Remove x-axis label
 axes[0].set_title(r'$\alpha$ = 0.05')
 lbl = [item.get_text() for item in axes[0].get_xticklabels()]
 axes[0].set_xticklabels(lbl, rotation=60)
+axes[0].grid(True)
+axes[0].spines['top'].set_visible(False)
+axes[0].spines['right'].set_visible(False)
+desired_y_ticks = [0, .025, .05, .075,.1]  # Replace with your desired values
+axes[0].set_yticks(desired_y_ticks)
+
 # Subplot 2
 
 sns.barplot(data=imp[1], x='feature', y='pi', hue='set', palette='Set1',errorbar="sd", ax=axes[1])
@@ -120,6 +128,10 @@ axes[1].set_title(r'$\alpha$ = 0.50')
 lbl = [item.get_text() for item in axes[1].get_xticklabels()]
 axes[1].set_xticklabels(lbl, rotation=60)
 axes[1].tick_params(left = False) 
+axes[1].grid(True)
+axes[1].spines['top'].set_visible(False)
+axes[1].spines['right'].set_visible(False)
+axes[1].spines['left'].set_visible(False)
 # Subplot 3
 
 sns.barplot(data=imp[2], x='feature', y='pi', hue='set', palette='Set1',errorbar="sd", ax=axes[2])
@@ -130,7 +142,11 @@ axes[2].set_xlabel('')  # Remove x-axis label
 axes[2].set_title(r'$\alpha$ = 0.95')
 lbl = [item.get_text() for item in axes[2].get_xticklabels()]
 axes[2].set_xticklabels(lbl, rotation=60)
-axes[2].tick_params(left = False) 
+axes[2].tick_params(left = False)
+axes[2].grid(True) 
+axes[2].spines['top'].set_visible(False)
+axes[2].spines['right'].set_visible(False)
+axes[2].spines['left'].set_visible(False)
 # Show the plot
 fig.text(0.07, 0.5, 'increase in mean quantile loss', va='center', rotation='vertical')
 plt.subplots_adjust(wspace=0.06, hspace=0.02)

@@ -6,26 +6,32 @@ import sys
 import os
 import numpy as np
 
-sys.path.append('../class')
+radar = pd.read_feather('../output/window_values_new')
+ms = pd.read_feather('../output/window_values_ms')
+radar = radar.loc[radar.total_mrms_accum>0].reset_index(drop=True)
+radar = radar.dropna()
+ms = ms.loc[ms.total_mrms_accum>0].reset_index(drop=True)
+ms = ms.dropna()
+#test = df.loc[df.norm_diff>70]
+#test.groupby(['start','mrms_lat','mrms_lon']).count()
+# this gage has most big outliers, see code above, remove it
+radar = radar.loc[(radar.mrms_lat!=40.57499999999929)&(radar.mrms_lon!=254.91499899999639)]
 
-from NRMSD import nrmsd
+ms = ms.loc[(ms.mrms_lat!=40.57499999999929)&(ms.mrms_lon!=254.91499899999639)]
 
-# open both window values
-file_path = os.path.join('..', 'output', 'window_values_FN')
-ms = pd.read_feather(file_path)
+radar = radar.loc[(radar.total_mrms_accum>1)].reset_index(drop=True)
+ms = ms.loc[(ms.total_mrms_accum>1)].reset_index(drop=True)
+#%%
+ms['max_mrms'] = [np.max(ms.mrms_15_int[i]) for i in ms.index]
+ms['nrmsd'] = ms.norm_diff/ms.max_mrms
+print(ms.nrmsd.median())
 
-file_path = os.path.join('..', 'output', 'window_values_radaronly')
-radar = pd.read_feather(file_path)
+radar = radar.loc[radar['index'].isin(ms['index'])]
+radar['max_mrms'] = [np.max(radar.mrms_15_int[i]) for i in radar.index]
+radar['nrmsd'] = radar.norm_diff/radar.max_mrms
+print(radar.nrmsd.median())
 
-accumulation_threshold = 0
 
-ms = ms.loc[(ms.total_accum_atgage>accumulation_threshold)|(ms.total_gage_accum>accumulation_threshold)]
-
-radar = radar.loc[(radar.total_accum_atgage>accumulation_threshold)|(radar.total_gage_accum>accumulation_threshold)]
-# %%
-# calculate mce
-ms_nrmsd = nrmsd(ms)
-radar_nrmsd = nrmsd(radar)
 # %%
 ######################   radar VALUES    ###############################################################################################
 
@@ -68,26 +74,16 @@ for i in range(100):
 
 # %%
 
-ms['nrmsd']=ms_nrmsd
-radar['nrmsd']=radar_nrmsd
+
 
 # %%
-''''''
-accumulation_threshold = 25
 
-ms_thresh = ms.loc[(ms.total_accum_atgage>accumulation_threshold)|(ms.total_gage_accum>accumulation_threshold)]
-
-radar_thresh = radar.loc[(radar.total_accum_atgage>accumulation_threshold)|(radar.total_gage_accum>accumulation_threshold)]
-# %%
-
-print(len(ms_thresh))
-print(len(radar_thresh))
 
 end = 1
 step = .1
 
-h_ms = np.histogram(ms_thresh.nrmsd,bins=np.arange(0,end, step))
-h_r = np.histogram(radar_thresh.nrmsd,bins=np.arange(0,end, step))
+h_ms = np.histogram(ms.nrmsd,bins=np.arange(0,end, step))
+h_r = np.histogram(radar.nrmsd,bins=np.arange(0,end, step))
 
 
 import matplotlib as mpl
@@ -102,8 +98,8 @@ fig, ax = plt.subplots(figsize=(6, 6))
 plt.xlabel('NRMSD')
 plt.ylabel('frequency')
 
-plt.bar(h_ms[1][:-1],h_ms[0].astype(float)/len(ms_thresh),edgecolor = 'blue', color = [], width = step-.02, linewidth = 2,label='with correction')
-plt.bar(h_r[1][:-1],h_r[0].astype(float)/len(radar_thresh),edgecolor = 'r', color = [], width = step-.02
+plt.bar(h_ms[1][:-1],h_ms[0].astype(float)/len(ms),edgecolor = 'blue', color = [], width = step-.02, linewidth = 2,label='with correction')
+plt.bar(h_r[1][:-1],h_r[0].astype(float)/len(radar),edgecolor = 'r', color = [], width = step-.02
 , linewidth = 2,label='radar only')
 
 plt.legend()

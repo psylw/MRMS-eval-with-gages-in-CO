@@ -21,7 +21,7 @@ state['qgb_t 0.95'] = state_results['qgb_t 0.95'].values
 # look at median
 med = state.groupby(['mrms_lat','mrms_lon']).median()['qgb_t 0.50']
 med = med.to_xarray()
-med_std = state.groupby(['mrms_lat','mrms_lon']).std()['qgb_t 0.50']
+med_std = state.groupby(['mrms_lat','mrms_lon']).quantile(.25)['qgb_t 0.50']
 med_std = med_std.to_xarray()
 
 low = state.groupby(['mrms_lat','mrms_lon']).median()['qgb_t 0.05']
@@ -45,13 +45,12 @@ count = count.reset_index()
 #%%
 #tell plotter what to plot
 plot_map = med
-name_cb = 'median of normalized RMSE prediction from '+r'$\alpha$ = 0.50'+' model'
+name_cb = 'median of nRMSE prediction from '+r'$\alpha$ = 0.50'+' model'
 y,x = med.mrms_lat,med.mrms_lon
 
 plot_map2 = med_std
-name_cb2 = 'std dev of normalized RMSE prediction from '+r'$\alpha$ = 0.50'+' model'
-
-
+name_cb2 = 'first quartile of nRMSE prediction from '+r'$\alpha$ = 0.50'+' model'
+levels = list(np.arange(0.3,0.8,.1))
 
 #%%
 import matplotlib.gridspec as gridspec
@@ -95,15 +94,16 @@ plt.rcParams['figure.dpi'] = 150
 # map of gage
 plotcrs = ccrs.LambertConformal(central_latitude=(41.3+36.8)/2, central_longitude=(-109.2-103.5)/2)
 
-fig,axs = plt.subplots(1,2, subplot_kw=dict(projection=plotcrs), figsize=(16*.7,8*.7))
+fig,axs = plt.subplots(1,2, subplot_kw=dict(projection=plotcrs), figsize=(15*.6,8*.6))
+
 
 gs = gridspec.GridSpec(2, 1, height_ratios=[1, .02], bottom=.07, top=.99,
                        hspace=0.01, wspace=0.01)
 
 # Set plot bounds -- or just comment this out if wanting to plot the full domain
 axs[0].set_extent((-109.2, -103.5, 36.8, 41.3))
-
-elev=axs[0].contourf(x,y,plot_map, cmap=cmap2,origin='upper', transform=ccrs.PlateCarree(),extend='both')
+axs[0].set_title('(a)')
+elev=axs[0].contourf(x,y,plot_map, cmap=cmap2,origin='upper', transform=ccrs.PlateCarree(),extend='both',levels=levels)
 
 
 cb =plt.colorbar(elev, orientation="horizontal", shrink=.5,pad=0.01,ax=axs[0])
@@ -157,8 +157,8 @@ frame.set_edgecolor('white')
 ###############second plot
 #################################
 axs[1].set_extent((-109.2, -103.5, 36.8, 41.3))
-
-elev=axs[1].contourf(x,y,plot_map2, cmap=cmap2,origin='upper', transform=ccrs.PlateCarree(),extend='both')
+axs[1].set_title('(b)')
+elev=axs[1].contourf(x,y,plot_map2, cmap=cmap2,origin='upper', transform=ccrs.PlateCarree(),extend='both',levels=levels)
 
 
 cb =plt.colorbar(elev, orientation="horizontal", shrink=.5,pad=0.01,ax=axs[1])
@@ -197,6 +197,7 @@ legend = axs[1].legend()
 frame = legend.get_frame()
 frame.set_facecolor('white')
 frame.set_edgecolor('white')
+plt.subplots_adjust(wspace=0.001)
 plt.tight_layout()
 #%%
 

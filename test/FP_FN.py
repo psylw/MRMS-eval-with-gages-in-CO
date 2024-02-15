@@ -19,5 +19,12 @@ df.loc[(df.total_mrms_accum>0)&(df.total_gage_accum>0),['onoff']]='TP'
 df.loc[(df.total_mrms_accum==0)&(df.total_gage_accum>0),['onoff']]='FN'
 df.loc[(df.total_mrms_accum>0)&(df.total_gage_accum==0),['onoff']]='FP'
 
-df.groupby('onoff').count()/len(df)
+df.groupby('onoff').count()/len(df)*100
 # %%
+
+len(df.loc[df.total_mrms_accum>df.total_gage_accum])/len(df)
+
+# %%
+import numpy as np
+df['max_gage'] = [np.max(df['15_int'][i]) for i in df.index]
+df['max_mrms'] = [np.max(df['mrms_15_int'][i]) for i in df.index]

@@ -13,7 +13,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.svm import SVR
 from sklearn.linear_model import LinearRegression
 from sklearn.neural_network import MLPRegressor
-
+#%%
 from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor, AdaBoostRegressor, BaggingRegressor
 
 from sklearn.model_selection import train_test_split,cross_validate,cross_val_predict,RandomizedSearchCV
@@ -22,11 +22,12 @@ from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mea
 from model_input import model_input
 
 df = pd.read_feather('output/train_test2')
-
-df['norm_diff'] = np.load('nRMSE.npy')
-#df = df.drop(columns=(['median_int_point','mean_int_point','mean_accum_point','median_accum_point']))
-
+sys.path.append('output')
+sys.path.append('test')
 cv,test,train,X_train, X_test, y_train, y_test, all_permutations, plot = model_input(df)
+
+from gb_q_hyp import idx
+
 # %%
 '''max_corr=[]
 for i in range(len(all_permutations)):
@@ -66,44 +67,44 @@ classifiers = [
 ]
 # %%
 # RANDOMLY SAMPLE UNCORRELATED FEATURES TO SEE WHICH PERFORMS BEST
-SAMPLE_permutations = random.sample(all_permutations, 10)
+#SAMPLE_permutations = random.sample(all_permutations, 10)
 scores = []
 
 for name, clf in zip(names, classifiers):
     print(name)
-    for idx,perm in enumerate(SAMPLE_permutations):
-        x = cross_validate(clf,X_train[:,perm],y_train, cv = cv,
-                        scoring=['r2','neg_mean_absolute_error','neg_mean_squared_error','neg_root_mean_squared_error'])
-        print(idx)
-        print(x['test_r2'])
-        print(x['test_neg_mean_absolute_error'])
-        print(x['test_neg_mean_squared_error'])
-        print(x['test_neg_root_mean_squared_error'])
+    #for idx,perm in enumerate(SAMPLE_permutations):
+    x = cross_validate(clf,X_train[:,all_permutations[idx]],y_train, cv = cv,
+                    scoring=['r2','neg_mean_absolute_error','neg_mean_squared_error','neg_root_mean_squared_error'])
+    print(idx)
+    print(x['test_r2'])
+    print(x['test_neg_mean_absolute_error'])
+    print(x['test_neg_mean_squared_error'])
+    print(x['test_neg_root_mean_squared_error'])
 
-        print(x['test_r2'].mean())
-        print(x['test_neg_mean_absolute_error'].mean())
-        print(x['test_neg_mean_squared_error'].mean())
-        print(x['test_neg_root_mean_squared_error'].mean())
+    print(x['test_r2'].mean())
+    print(x['test_neg_mean_absolute_error'].mean())
+    print(x['test_neg_mean_squared_error'].mean())
+    print(x['test_neg_root_mean_squared_error'].mean())
 
-        print(x['test_r2'].std())
-        print(x['test_neg_mean_absolute_error'].std())
-        print(x['test_neg_mean_squared_error'].std())
-        print(x['test_neg_root_mean_squared_error'].std())
+    print(x['test_r2'].std())
+    print(x['test_neg_mean_absolute_error'].std())
+    print(x['test_neg_mean_squared_error'].std())
+    print(x['test_neg_root_mean_squared_error'].std())
 
-        scores.append([name,idx,
-                       x['test_r2'].mean(),
-                       x['test_r2'].std(),
-                       x['test_neg_mean_absolute_error'].mean(),
-                       x['test_neg_mean_absolute_error'].std(),
-                       x['test_neg_mean_squared_error'].mean(),
-                       x['test_neg_mean_squared_error'].std(),                                                                               x['test_neg_root_mean_squared_error'].mean(),
-                       x['test_neg_root_mean_squared_error'].std()])
+    scores.append([name,idx,
+                    x['test_r2'].mean(),
+                    x['test_r2'].std(),
+                    x['test_neg_mean_absolute_error'].mean(),
+                    x['test_neg_mean_absolute_error'].std(),
+                    x['test_neg_mean_squared_error'].mean(),
+                    x['test_neg_mean_squared_error'].std(),                                                                               x['test_neg_root_mean_squared_error'].mean(),
+                    x['test_neg_root_mean_squared_error'].std()])
 
 scores = pd.DataFrame(scores,columns=['names','IDX',
-                              'test_r2_mean','test_r2_std',
-                              'test_neg_mean_absolute_error_mean','test_neg_mean_absolute_error_std',
-                              'test_neg_mean_squared_error_mean','test_neg_mean_squared_error_std',
-                              'test_neg_root_mean_squared_error_mean','test_neg_root_mean_squared_error_std'])
+                            'test_r2_mean','test_r2_std',
+                            'test_neg_mean_absolute_error_mean','test_neg_mean_absolute_error_std',
+                            'test_neg_mean_squared_error_mean','test_neg_mean_squared_error_std',
+                            'test_neg_root_mean_squared_error_mean','test_neg_root_mean_squared_error_std'])
 # %%
 # select optimal noncorrelated permutation per model
 model_perm = []
@@ -146,7 +147,7 @@ hyp = {}
 for name, clf, param in zip(names, classifiers, param):
     print(name)
     clf = clf
-    idx = model_perm.loc[model_perm.idx==name].name.values[0]
+    #idx = model_perm.loc[model_perm.idx==name].name.values[0]
     mod = RandomizedSearchCV(estimator=clf,
                        param_distributions = param,
                        n_iter=15, 
@@ -154,7 +155,7 @@ for name, clf, param in zip(names, classifiers, param):
                        refit='neg_mean_absolute_error',
                        cv=cv)
 
-    _ = mod.fit(X_train[:,SAMPLE_permutations[idx]],y_train)  
+    _ = mod.fit(X_train[:,all_permutations[idx]],y_train)  
 
     hyp[name] = pd.DataFrame(mod.cv_results_).sort_values('rank_test_neg_mean_absolute_error')
 
@@ -192,18 +193,19 @@ names = [
 #feature_names = train.drop(columns='norm_diff').columns
 
 for name, clf in zip(names, classifiers):
-    idx = model_perm.loc[model_perm.idx==name].name.values[0]
+    
     f, ax = plt.subplots(figsize=(6, 6))
-    clf.fit(X_train[:,SAMPLE_permutations[idx]],y_train)
+    clf.fit(X_train[:,all_permutations[idx]],y_train)
     '''    mdi_importances = pd.Series(
     clf.feature_importances_, index=feature_names).sort_values(ascending=True)
     mdi_importances.plot.barh()
     plt.show()'''
-    ypred = clf.predict(X_test[:,SAMPLE_permutations[idx]])
+    ypred = clf.predict(X_test[:,all_permutations[idx]])
 
     print(name)
     print(r2_score(y_test,ypred))
     print(mean_absolute_error(y_test,ypred))
+    print(mean_squared_error(y_test,ypred))
 
     sns.scatterplot(x=y_test, y=ypred, s=5, color=".15")
     sns.histplot(x=y_test, y=ypred, bins=50, pthresh=.1, cmap="mako")
