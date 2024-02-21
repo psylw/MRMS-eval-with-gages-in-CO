@@ -1,4 +1,6 @@
-
+###############################################################################
+# save coordinates for each storm to calculate storm stats 1 storm at a time.
+###############################################################################
 import xarray as xr
 import os
 import glob

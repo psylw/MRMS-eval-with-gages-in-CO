@@ -1,4 +1,7 @@
 # %%
+###############################################################################
+# compute additional point (at MRMS lat/lon) features for each time series sample
+###############################################################################
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,7 +13,7 @@ from datetime import timedelta
 #%%
 #####################################################################################################################   OPEN WINDOW VALUES
 
-compare = pd.read_feather('output/window_values_new')
+compare = pd.read_feather('../output/window_values_new')
 
 
 # %%
@@ -90,7 +93,7 @@ compare['hour']=[compare['start'][i].hour for i in range(len(compare))]
 
 # %%
 elev = '\\CO_SRTM1arcsec__merge.tif'
-data_folder = os.path.join('..','..','elev_data')
+data_folder = os.path.join('..','..','data','elev_data')
 
 codtm = rxr.open_rasterio(data_folder+elev)
 # change lon to match global lat/lon in grib file
@@ -140,5 +143,5 @@ compare = compare.drop(columns=['index',  'accum', '15_int', 'gage_lat', 'gage_l
        'gage_source', 'mrms_accum', 'mrms_15_int', 
        'total_gage_accum',  'len_m', 'end'])
 #%%
-compare.to_feather('output\\train_test2')
+compare.to_feather('..\\output\\train_test2')
 # %%

@@ -1,4 +1,8 @@
 # %%
+###############################################################################
+# assign storm-id using connected component analysis
+###############################################################################
+
 # create unique storm label for spatially connected regions where precip>0. 
 # use class/patch_stormid_acrossmonths.py to patch storm ids across months
 import xarray as xr

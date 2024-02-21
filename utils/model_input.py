@@ -1,4 +1,8 @@
 # %%
+###############################################################################
+# clean dataset, manually set cross folds, determine correlated features
+###############################################################################
+
 import random
 import pandas as pd
 import matplotlib.pyplot as plt

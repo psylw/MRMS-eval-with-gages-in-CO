@@ -1,4 +1,8 @@
 # %%
+###############################################################################
+# get storm features for each time series
+###############################################################################
+
 import os
 import xarray as xr
 from dask.distributed import Client
@@ -12,12 +16,12 @@ import numpy as np
 
 #####################################################################################################################   OPEN FILE WITH POINT FEATURES
 
-compare = pd.read_feather('output/train_test2')
+compare = pd.read_feather('../output/train_test2')
 
 
 #####################################################################################################################   IMPORT MONTHLY STORM STATS 
 
-storm_folder = os.path.join('..', '..','..',"storm_stats")
+storm_folder = os.path.join('..', '..','data',"storm_stats")
 # ACCUMULATION
 file_temp = glob.glob(storm_folder+'//'+'*temp_var_accum')
 file_spatial = glob.glob(storm_folder+'//'+'*spatial_var_accum')
@@ -76,5 +80,5 @@ compare['spatial_var_accum'] = spatial_atgage
 compare['velocity'] = velocity
 compare['area'] = area
 # %%
-compare.to_feather('output\\train_test2')
+compare.to_feather('..\\output\\train_test2')
 # %%

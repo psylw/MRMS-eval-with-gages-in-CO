@@ -1,3 +1,8 @@
+###############################################################################
+# train gradient boosting regressor with quantile loss
+# determine best performing subsection of data that has low feature correlation for alpha = 0.5
+# tune hyperparameters for each alpha value
+###############################################################################
 
 # used this tutorial to explore quantile loss for gb
 
@@ -20,6 +25,8 @@ from sklearn.linear_model import QuantileRegressor
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import train_test_split,cross_validate,cross_val_predict,RandomizedSearchCV
 from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mean_squared_error,mean_pinball_loss
+
+sys.path.append('utils')
 from model_input import model_input
 
 df = pd.read_feather('output/train_test2')

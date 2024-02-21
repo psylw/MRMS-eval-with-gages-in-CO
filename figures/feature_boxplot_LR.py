@@ -17,7 +17,7 @@ from sklearn.metrics import make_scorer
 from sklearn.model_selection import train_test_split,cross_validate,cross_val_predict,RandomizedSearchCV
 
 from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mean_squared_error,mean_pinball_loss
-sys.path.append('..')
+sys.path.append('../utils')
 from model_input import model_input
 df = pd.read_feather('../output/train_test2')
 sys.path.append('../output')
@@ -89,5 +89,5 @@ for i,col in enumerate(state.columns):
 
 #%% 29 columns
     
-fig.savefig("../output_figures_lin/spread.pdf",
+fig.savefig("../output_figures/lin_spread.pdf",
        bbox_inches='tight',dpi=255,transparent=False,facecolor='white')

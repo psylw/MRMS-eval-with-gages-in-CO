@@ -16,7 +16,7 @@ from sklearn.metrics import make_scorer
 from sklearn.model_selection import train_test_split,cross_validate,cross_val_predict,RandomizedSearchCV
 
 from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mean_squared_error,mean_pinball_loss
-sys.path.append('..')
+sys.path.append('../utils')
 from model_input import model_input
 
 sys.path.append('../output')
@@ -30,16 +30,6 @@ state = pd.read_feather('../output/stateclean')
 state_results = pd.read_feather('../output/state_results')
 #state_results=state_results.divide(state.max_mrms.values,axis=0)
 state['qgb_t 0.50'] = state_results['qgb_t 0.50'].values
-#%%
-'''coord_state_pred = state.groupby(['mrms_lat','mrms_lon']).median()['qgb_t 0.50']
-
-coord_state_pred_lat_low = coord_state_pred.loc[coord_state_pred<coord_state_pred.quantile(.1)].reset_index().mrms_lat.values
-coord_state_pred_lon_low = coord_state_pred.loc[coord_state_pred<coord_state_pred.quantile(.1)].reset_index().mrms_lon.values
-
-coord_state_pred_lat_high = coord_state_pred.loc[coord_state_pred>coord_state_pred.quantile(.9)].reset_index().mrms_lat.values
-coord_state_pred_lon_high = coord_state_pred.loc[coord_state_pred>coord_state_pred.quantile(.9)].reset_index().mrms_lon.values
-
-state=state.loc[(state.mrms_lat.isin(coord_state_pred_lat_low))&(state.mrms_lon.isin(coord_state_pred_lon_low))]'''
 
 #%%
 # Calculate the quantiles
@@ -92,4 +82,4 @@ for i,col in enumerate(c):
 #%% 29 columns
     
 fig.savefig("../output_figures/spread.pdf",
-       bbox_inches='tight',dpi=255,transparent=False,facecolor='white')
+       bbox_inches='tight',dpi=600,transparent=False,facecolor='white')

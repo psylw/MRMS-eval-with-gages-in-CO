@@ -1,7 +1,11 @@
+###############################################################################
+# RMSE function. Timeseries resampled to 10min.
+###############################################################################
+
 import pandas as pd
 import numpy as np
 
-def nrmsd(df):
+def rmse(df):
     rmse_unsorted = []
 
     def rmse(x1,x2,gm):

@@ -1,4 +1,7 @@
 # %%
+###############################################################################
+# chunk MRMS and gage data into 8-hour time series for MS corrected data. 
+###############################################################################
 import os
 import xarray as xr
 from dask.distributed import Client
@@ -13,14 +16,14 @@ import numpy as np
 #####################################################################################################################   IMPORT GAGE DATA
 
 # Load the dictionary from the Pickle file
-with open('test//gage_all.pickle', 'rb') as file:
+with open('..//output//gage_all.pickle', 'rb') as file:
     gage = pickle.load(file)
 
 #client = Client()
 #%%
 #####################################################################################################################   IMPORT MRMS DATA 
 # see mrms_atgage.py for how this dataset was built
-mrms_folder = os.path.join('mrms_atgage')
+mrms_folder = os.path.join('../mrms_atgage')
 filenames = os.listdir(mrms_folder)
 #####################################################################################################################   LOOK AT GAGE DATA, LOOK AT MRMS DATA
 # MOVE TO ANOTHER FILE
@@ -122,10 +125,10 @@ compare['mrms_lon'] = [compare.mrms_lon[i][0] for i in compare.index]
 #%%
 #####################################################################################################################   CALCULATE MCE and save
 import sys
-sys.path.append('utils')
-from NRMSD import nrmsd
+sys.path.append('../utils')
+from RMSE import rmse
 
-compare['norm_diff'] = nrmsd(compare)
+compare['norm_diff'] = rmse(compare)
 
-compare.reset_index(drop=True).to_feather('output/window_values_ms')
+compare.reset_index(drop=True).to_feather('../output/window_values_ms')
 # %%

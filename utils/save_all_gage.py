@@ -1,9 +1,12 @@
 # %%
+###############################################################################
+# Save all gage data as one file
+###############################################################################
 import os
 from os import listdir
 import sys
 import pickle
-sys.path.append('class')
+sys.path.append('clean_gage_data')
 
 from CPF import *
 from grizzly import *
@@ -13,7 +16,7 @@ from usgs_other import *
 from usgs_new import *
 
 # Create a path to the code file
-data_folder = os.path.join('..', '..','precip_gage')
+data_folder = os.path.join('..', '..','data','precip_gage')
 
 
 # coagmet
@@ -34,6 +37,6 @@ new_usgs = get_usgsnew(data_folder)
 gage = [coag, cpf, disdrom,grizzly, other, new_usgs]
 
 # Saving the dictionary to a file using Pickle
-with open('output//gage_all.pickle', 'wb') as file:
+with open('..//output//gage_all.pickle', 'wb') as file:
     pickle.dump(gage, file)
 # %%

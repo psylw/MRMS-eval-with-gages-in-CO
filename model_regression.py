@@ -1,4 +1,7 @@
 # %%
+###############################################################################
+# evaluate performance of several model types for deterministic regression
+###############################################################################
 import random
 import pandas as pd
 import matplotlib.pyplot as plt

@@ -1,3 +1,7 @@
+
+###############################################################################
+# define hyperparameter space for regression analysis (see Supplemental Information)
+###############################################################################
 import scipy.stats as stats
 import numpy as np
 from scipy.stats import uniform, randint
