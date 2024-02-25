@@ -97,3 +97,10 @@ output_figures/spread.pdf
 eval.code-workspace
 utils/__pycache__/model_input.cpython-38.pyc
 utils/__pycache__/RMSE.cpython-38.pyc
+output_figures/f01.pdf
+output_figures/f02.pdf
+output_figures/f03.pdf
+output_figures/f04.pdf
+output_figures/f05.pdf
+output_figures/f06.pdf
+output_figures/f07.pdf

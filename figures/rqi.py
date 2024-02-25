@@ -84,15 +84,15 @@ axs[0].set_title('(a)')
 elev=axs[0].contourf(x,y,plot_map, cmap=cmap1,origin='upper', transform=ccrs.PlateCarree(),extend='both')
 
 
-cb =plt.colorbar(elev, orientation="horizontal", shrink=.5,pad=0.01,ax=axs[0])
-cb.ax.tick_params(labelsize=8)
-cb.set_label(name_cb, fontsize=10)
+cb =plt.colorbar(elev, orientation="horizontal", shrink=.75,pad=0.01,ax=axs[0])
+cb.ax.tick_params(labelsize=10)
+cb.set_label(name_cb, fontsize=12)
 
 axs[0].scatter(cities_df.longitude,cities_df.latitude,
            transform=ccrs.PlateCarree(),s = 25, facecolors='red',edgecolors='black',marker='^',label='city')
 
 axs[0].scatter(radar_df.longitude,radar_df.latitude,
-           transform=ccrs.PlateCarree(),s = 25, edgecolors='black',facecolors='#65FE08',marker='o',label='radar')
+           transform=ccrs.PlateCarree(),s = 25, edgecolors='black',facecolors='cornflowerblue',marker='o',label='radar')
 
 axs[0].add_feature(cfeature.STATES, linewidth=1)
 
@@ -120,15 +120,15 @@ axs[1].set_title('(b)')
 elev=axs[1].contourf(x,y,plot_map2, cmap=cmap2,origin='upper', transform=ccrs.PlateCarree(),extend='both')
 
 
-cb =plt.colorbar(elev, orientation="horizontal", shrink=.5,pad=0.01,ax=axs[1])
-cb.ax.tick_params(labelsize=8)
-cb.set_label(name_cb2, fontsize=10)
+cb =plt.colorbar(elev, orientation="horizontal", shrink=.75,pad=0.01,ax=axs[1])
+cb.ax.tick_params(labelsize=10)
+cb.set_label(name_cb2, fontsize=12)
 
 axs[1].scatter(cities_df.longitude,cities_df.latitude,
            transform=ccrs.PlateCarree(),s = 25, facecolors='red',edgecolors='black',marker='^',label='city')
 
 axs[1].scatter(radar_df.longitude,radar_df.latitude,
-           transform=ccrs.PlateCarree(),s = 25, edgecolors='black',facecolors='#65FE08',marker='o',label='radar')
+           transform=ccrs.PlateCarree(),s = 25, edgecolors='black',facecolors='cornflowerblue',marker='o',label='radar')
 
 axs[1].add_feature(cfeature.STATES, linewidth=1)
 
@@ -152,7 +152,7 @@ frame.set_edgecolor('white')
 plt.tight_layout()
 
 
-fig.savefig('../output_figures/rqi.pdf',
-           bbox_inches='tight',dpi=255,transparent=False,facecolor='white')
+fig.savefig('../output_figures/f07.pdf',
+           bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
 
 # %%

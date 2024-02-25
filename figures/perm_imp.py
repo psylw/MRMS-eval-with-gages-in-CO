@@ -15,7 +15,7 @@ from sklearn.metrics import make_scorer
 from sklearn.model_selection import train_test_split,cross_validate,cross_val_predict,RandomizedSearchCV
 
 from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mean_squared_error,mean_pinball_loss
-sys.path.append('..')
+sys.path.append('../utils')
 from model_input import model_input
 
 df = pd.read_feather('../output/train_test2')
@@ -30,17 +30,7 @@ all_models = {}
 for alpha, p in zip([0.05, 0.5, 0.95],param[0:3]):
     gbr_t = GradientBoostingRegressor(**p,loss="quantile", alpha=alpha)
     all_models["qgb_t %1.2f" % alpha] = gbr_t
-#%%
-'''# look at cv
-for i in range(len(all_permutations[25])):
-    print(i)
-    for name, gbr in zip(all_models.keys(),list(all_models.values())):
-        
-        p = list(all_permutations[25])
-        p.pop(i)
-        x = cross_validate(gbr,X_train[:,p],y_train, cv = cv,
-                        scoring=scoring)
-        print([x['test_neg_05p'].mean(),x['test_neg_5p'].mean(),x['test_neg_95p'].mean()])'''
+
 
 # %%
 corr = ['total_mrms_accum',
@@ -101,7 +91,7 @@ for name, gbr,a in zip(all_models.keys(),list(all_models.values()),[0.05,.5,.95]
 
 #%%
 # Create a 1 by 3 subplot
-fig, axes = plt.subplots(1, 3, figsize=(16*.7, 2.5*.7), sharey=True) # Adjust the figure size as needed
+fig, axes = plt.subplots(1, 3, figsize=(20*.65, 3*.65), sharey=True) # Adjust the figure size as needed
 
 # Subplot 1
 
@@ -109,14 +99,14 @@ sns.barplot(data=imp[0], x='feature', y='pi', hue='set', palette='Set1',errorbar
 axes[0].legend([], [], frameon=False)  # Remove legend
 axes[0].set_ylabel('')  # Remove x-axis label
 axes[0].set_xlabel('')  # Remove x-axis label
-axes[0].set_title(r'$\alpha$ = 0.05')
+axes[0].set_title(r'$\alpha$ = 0.05',fontsize=12)
 lbl = [item.get_text() for item in axes[0].get_xticklabels()]
-axes[0].set_xticklabels(lbl, rotation=60)
+axes[0].set_xticklabels(lbl, rotation=60,fontsize=12)
 axes[0].grid(True)
 axes[0].spines['top'].set_visible(False)
 axes[0].spines['right'].set_visible(False)
 desired_y_ticks = [0, .025, .05, .075,.1]  # Replace with your desired values
-axes[0].set_yticks(desired_y_ticks)
+axes[0].set_yticks(desired_y_ticks,fontsize=12)
 
 # Subplot 2
 
@@ -124,9 +114,9 @@ sns.barplot(data=imp[1], x='feature', y='pi', hue='set', palette='Set1',errorbar
 axes[1].legend([], [], frameon=False)  # Remove legend
 axes[1].set_ylabel('')  # Remove x-axis label
 axes[1].set_xlabel('')  # Remove x-axis label
-axes[1].set_title(r'$\alpha$ = 0.50')
+axes[1].set_title(r'$\alpha$ = 0.50',fontsize=12)
 lbl = [item.get_text() for item in axes[1].get_xticklabels()]
-axes[1].set_xticklabels(lbl, rotation=60)
+axes[1].set_xticklabels(lbl, rotation=60,fontsize=12)
 axes[1].tick_params(left = False) 
 axes[1].grid(True)
 axes[1].spines['top'].set_visible(False)
@@ -139,19 +129,19 @@ sns.barplot(data=imp[2], x='feature', y='pi', hue='set', palette='Set1',errorbar
 axes[2].legend([], [], frameon=False)  # Remove legend
 axes[2].set_ylabel('')  # Remove x-axis label
 axes[2].set_xlabel('')  # Remove x-axis label
-axes[2].set_title(r'$\alpha$ = 0.95')
+axes[2].set_title(r'$\alpha$ = 0.95',fontsize=12)
 lbl = [item.get_text() for item in axes[2].get_xticklabels()]
-axes[2].set_xticklabels(lbl, rotation=60)
+axes[2].set_xticklabels(lbl, rotation=60,fontsize=12)
 axes[2].tick_params(left = False)
 axes[2].grid(True) 
 axes[2].spines['top'].set_visible(False)
 axes[2].spines['right'].set_visible(False)
 axes[2].spines['left'].set_visible(False)
 # Show the plot
-fig.text(0.07, 0.5, 'increase in mean quantile loss', va='center', rotation='vertical')
+fig.text(0.07, 0.5, 'increase in mean (QL)', va='center', rotation='vertical',fontsize=12)
 plt.subplots_adjust(wspace=0.06, hspace=0.02)
 plt.show()
 #%%
-fig.savefig("../output_figures/fi.pdf",
-       bbox_inches='tight',dpi=255,transparent=False,facecolor='white')
+fig.savefig("../output_figures/f04.pdf",
+       bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
 # %%

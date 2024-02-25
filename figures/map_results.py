@@ -45,11 +45,11 @@ count = count.reset_index()
 #%%
 #tell plotter what to plot
 plot_map = med
-name_cb = 'median of nRMSE prediction from '+r'$\alpha$ = 0.50'+' model'
+name_cb = 'median of nRMSE prediction'
 y,x = med.mrms_lat,med.mrms_lon
 
 plot_map2 = med_std
-name_cb2 = 'first quartile of nRMSE prediction from '+r'$\alpha$ = 0.50'+' model'
+name_cb2 = 'first quartile of nRMSE prediction'
 levels = list(np.arange(0.3,0.8,.1))
 
 #%%
@@ -94,7 +94,7 @@ plt.rcParams['figure.dpi'] = 150
 # map of gage
 plotcrs = ccrs.LambertConformal(central_latitude=(41.3+36.8)/2, central_longitude=(-109.2-103.5)/2)
 
-fig,axs = plt.subplots(1,2, subplot_kw=dict(projection=plotcrs), figsize=(15*.6,8*.6))
+fig,axs = plt.subplots(1,2, subplot_kw=dict(projection=plotcrs), figsize=(15*.6,7.8*.6))
 
 
 gs = gridspec.GridSpec(2, 1, height_ratios=[1, .02], bottom=.07, top=.99,
@@ -107,14 +107,14 @@ elev=axs[0].contourf(x,y,plot_map, cmap=cmap2,origin='upper', transform=ccrs.Pla
 
 
 cb =plt.colorbar(elev, orientation="horizontal", shrink=.5,pad=0.01,ax=axs[0])
-cb.ax.tick_params(labelsize=8)
-cb.set_label(name_cb, fontsize=10)
+cb.ax.tick_params(labelsize=10)
+cb.set_label(name_cb, fontsize=12)
 
 axs[0].scatter(cities_df.longitude,cities_df.latitude,
            transform=ccrs.PlateCarree(),s = 25, facecolors='red',edgecolors='black',marker='^',label='city')
 
 axs[0].scatter(radar_df.longitude,radar_df.latitude,
-           transform=ccrs.PlateCarree(),s = 25, edgecolors='black',facecolors='#65FE08',marker='o',label='radar')
+           transform=ccrs.PlateCarree(),s = 25, edgecolors='black',facecolors='cornflowerblue',marker='o',label='radar')
 cmap_data = [
 (255,255,212),
 (254,217,142),
@@ -162,21 +162,21 @@ elev=axs[1].contourf(x,y,plot_map2, cmap=cmap2,origin='upper', transform=ccrs.Pl
 
 
 cb =plt.colorbar(elev, orientation="horizontal", shrink=.5,pad=0.01,ax=axs[1])
-cb.ax.tick_params(labelsize=8)
-cb.set_label(name_cb2, fontsize=10)
+cb.ax.tick_params(labelsize=10)
+cb.set_label(name_cb2, fontsize=12)
 
 axs[1].scatter(cities_df.longitude,cities_df.latitude,
            transform=ccrs.PlateCarree(),s = 25, facecolors='red',edgecolors='black',marker='^',label='city')
 
 axs[1].scatter(radar_df.longitude,radar_df.latitude,
-           transform=ccrs.PlateCarree(),s = 25, edgecolors='black',facecolors='#65FE08',marker='o',label='radar')
+           transform=ccrs.PlateCarree(),s = 25, edgecolors='black',facecolors='cornflowerblue',marker='o',label='radar')
 
 g=axs[1].scatter(count.mrms_lon,count.mrms_lat,
            transform=ccrs.PlateCarree(),s = 3, c = count.accum.values,cmap=cmap,norm=norm)
 
 cbar2 = plt.colorbar(g, orientation='vertical', shrink=.55,pad=0.01,ax=axs[1])
-cbar2.ax.tick_params(labelsize=8)
-cbar2.set_label("proportion of samples", fontsize=10)
+cbar2.ax.tick_params(labelsize=10)
+cbar2.set_label("proportion of samples", fontsize=12)
 
 axs[1].add_feature(cfeature.STATES, linewidth=1)
 
@@ -201,7 +201,7 @@ plt.subplots_adjust(wspace=0.001)
 plt.tight_layout()
 #%%
 
-fig.savefig('../output_figures/resultmap.pdf',
-           bbox_inches='tight',dpi=255,transparent=False,facecolor='white')
+fig.savefig('../output_figures/f03.pdf',
+           bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
 
 # %%

@@ -1,6 +1,6 @@
 # %%
 ###############################################################################
-# 
+# Compare gradient boosting and linear quantile regressor cv and test results
 ###############################################################################
 import random
 import pandas as pd
@@ -18,8 +18,9 @@ from sklearn.metrics import make_scorer
 from sklearn.model_selection import train_test_split,cross_validate,cross_val_predict,RandomizedSearchCV
 
 from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mean_squared_error,mean_pinball_loss
+sys.path.append('../utils')
 from model_input import model_input
-df = pd.read_feather('output/train_test2')
+df = pd.read_feather('../output/train_test2')
 
 cv,test,train,X_train, X_test, y_train, y_test, all_permutations, plot = model_input(df)
 
@@ -98,39 +99,7 @@ test_results['truth'] = y_test
 test_results.to_feather('output/test_results')
 #test_results=test_results.divide(test.max_mrms.values,axis=0)
 #%%
-test_results = pd.read_feather('output/test_results')
-fig = plt.figure(figsize=(10, 8))
-test_results = test_results.sort_values(by='qgb_t 0.50').reset_index(drop=True)
-#plt.plot(test_results.reduced_data, test_results['qgb 0.50'], 'r+',label='median')
-outliers = test_results.loc[(test_results.truth>test_results['qgb_t 0.95'])|(test_results.truth<test_results['qgb_t 0.05'])]
 
-notoutlier = test_results.loc[(test_results.truth<test_results['qgb_t 0.95'])&(test_results.truth>test_results['qgb_t 0.05'])]
-
-plt.plot(outliers['qgb_t 0.50'], outliers['truth'], 'r+',label='out of range')
-
-plt.plot(notoutlier['qgb_t 0.50'], notoutlier['truth'], 'g+',label='in range')
-#sns.histplot(x=test_results['qgb_t 0.50'], y=test_results['truth'], bins=50, pthresh=.1, cmap="mako")
-sns.kdeplot(x=test_results['qgb_t 0.50'], y=test_results['truth'],  color="cyan", linewidths=1)
-plt.fill_between(
-test_results['qgb_t 0.50'].ravel(), test_results['qgb_t 0.05'], test_results['qgb_t 0.95'], alpha=0.4, label="Predicted 90% CI"
-)
-
-#sns.kdeplot(x=test_results['qgb_t 0.50'], y=test_results['truth'], levels=5, color="red", linewidths=1)
-plt.xlabel('predicted median RMSE')
-plt.ylabel('RMSE')
-plt.xlim(0,test_results['qgb_t 0.50'].max())
-plt.ylim(0,test_results['truth'].max()+5)
-plt.plot([0,100],[0,100],'k--')
-plt.gca().spines['top'].set_visible(False)
-plt.gca().spines['right'].set_visible(False)
-
-plt.grid(True)
-plt.legend()
-
-plt.show()
-#%%
-fig.savefig("output_figures/model_perf.pdf",
-       bbox_inches='tight',dpi=255,transparent=False,facecolor='white')
 # %%
 
 print(round(len(test_results.loc[(test_results.truth>test_results['qgb_t 0.95'])|(test_results.truth<test_results['qgb_t 0.05'])])/len(test_results),3))
@@ -178,26 +147,3 @@ for i in range(5):
 print(round(np.mean(cv_ci),3))
 print(round(np.std(cv_ci),3))
 #%%
-fig = plt.figure(figsize=(10, 8))
-test_results = test_results.sort_values(by='qlin 0.50').reset_index(drop=True)
-#plt.plot(test_results.reduced_data, test_results['qgb 0.50'], 'r+',label='median')
-outliers = test_results.loc[(test_results.truth>test_results['qlin 0.95'])|(test_results.truth<test_results['qlin 0.05'])]
-
-notoutlier = test_results.loc[(test_results.truth<test_results['qlin 0.95'])&(test_results.truth>test_results['qlin 0.05'])]
-
-plt.plot(outliers['qlin 0.50'], outliers['truth'], 'r+',label='out of range')
-
-plt.plot(notoutlier['qlin 0.50'], notoutlier['truth'], 'g+',label='in range')
-plt.fill_between(
-test_results['qlin 0.50'].ravel(), test_results['qlin 0.05'], test_results['qlin 0.95'], alpha=0.4, label="Predicted 90% CI"
-)
-
-#sns.kdeplot(x=test_results['qlin 0.50'], y=test_results['truth'], levels=5, color="red", linewidths=1)
-plt.xlabel('predicted median RMSE')
-plt.ylabel('RMSE')
-plt.xlim(0,test_results['qlin 0.50'].max())
-plt.ylim(0,test_results['truth'].max()+5)
-
-plt.legend()
-
-plt.show()

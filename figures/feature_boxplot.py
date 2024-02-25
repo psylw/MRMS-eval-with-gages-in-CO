@@ -49,7 +49,7 @@ state_good = state_good.drop(columns='qgb_t 0.50')
 
 
 #%%
-fig, axs = plt.subplots(2,5, figsize=(14,5), facecolor='w', edgecolor='k',sharex=True)
+fig, axs = plt.subplots(2,5, figsize=(14*.85,5*.85), facecolor='w', edgecolor='k',sharex=True)
 fig.subplots_adjust(hspace = .18, wspace=.4)
 
 axs = axs.ravel()
@@ -71,8 +71,9 @@ for i,col in enumerate(c):
     axs[i].boxplot(d)
     
     axs[i].set_xticks([1,2],labels=['low',
-                                        'high'],rotation=45)
-    axs[i].set_title(title[i])
+                                        'high'],rotation=45,fontsize=12)
+    axs[i].set_yticks(fontsize=12)
+    axs[i].set_title(title[i],fontsize=12)
 
     test1 = np.isin(i,make_log)
     
@@ -81,5 +82,6 @@ for i,col in enumerate(c):
 
 #%% 29 columns
     
-fig.savefig("../output_figures/spread.pdf",
+fig.savefig("../output_figures/f05.pdf",
        bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
+# %%

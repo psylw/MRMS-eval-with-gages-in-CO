@@ -35,7 +35,7 @@ radar = {'name':['kcys','kftg','kpux','kala','kgjx'],
          'longitude':[-104.82, -104.56,-104.2,-105.86,-108.23]}
 radar_df = pd.DataFrame(radar)
 #%%
-datafile1 = "../../../elev_data/CO_SRTM1arcsec__merge.tif"
+datafile1 = "../../../data/elev_data/CO_SRTM1arcsec__merge.tif"
 codtm = rxr.open_rasterio(datafile1)
 newelev = codtm.drop_vars('band')
 
@@ -45,7 +45,7 @@ noband = noband[{'x': slice(None, None, 10), 'y': slice(None, None, 10)}][{}]
 lon, lat = np.meshgrid(noband.x,noband.y)
 
 
-fig = plt.figure(1, figsize=(14,10))
+fig = plt.figure(1, figsize=(14*.9,10*.9))
 gs = gridspec.GridSpec(2, 1, height_ratios=[1, .02], bottom=.07, top=.99,
                        hspace=0.01, wspace=0.01)
 
@@ -57,7 +57,7 @@ elev=ax.contourf(lon,lat, noband, levels=list(range(2000, 5000, 500)), origin='u
             alpha=0.4,transform=ccrs.PlateCarree())
 cb =fig.colorbar(elev,orientation="horizontal", shrink=.55,pad=0.01)
 cb.ax.tick_params(labelsize=12)
-cb.set_label("elevation (m)", fontsize=14)
+cb.set_label("elevation (m)", fontsize=12)
 
 ax.add_feature(cfeature.STATES, linewidth=1)
 
@@ -66,14 +66,15 @@ ax.scatter(cities_df.longitude,cities_df.latitude,
            transform=ccrs.PlateCarree(),s = 120, facecolors='red',marker="^",label='city',edgecolors='black')
 
 ax.scatter(radar_df.longitude,radar_df.latitude,
-           transform=ccrs.PlateCarree(),s =150,facecolors='#65FE08',marker='o',label='radar',edgecolors='black')
+           transform=ccrs.PlateCarree(),s =150,facecolors='cornflowerblue',marker='o',label='radar',edgecolors='black')
 gl = ax.gridlines(crs=ccrs.PlateCarree(), 
                   alpha=0, 
                   draw_labels=True, 
                   dms=True, 
                   x_inline=False, 
                   y_inline=False)
-gl.xlabel_style = {'rotation':0}
+gl.xlabel_style = {'rotation':0, 'fontsize':12}
+gl.ylabel_style = {'fontsize':12}
 # add these before plotting
 gl.bottom_labels=False   # suppress top labels
 gl.right_labels=False # suppress right labels
@@ -82,11 +83,11 @@ df1 = source.loc[source.gage_source=='usgs']
 df2 = source.loc[source.gage_source=='csu']
 df3 = source.loc[source.gage_source=='coagmet']
 plt.scatter(df1.gage_lon,df1.gage_lat,transform=ccrs.PlateCarree(),label='USGS',marker='x',color='darkred',s =15,linewidth=1)
-plt.scatter(df2.gage_lon,df2.gage_lat,transform=ccrs.PlateCarree(),label='CSU',marker='x',color='fuchsia',s =15,linewidth=1)
-plt.scatter(df3.gage_lon,df3.gage_lat,transform=ccrs.PlateCarree(),label='CoAgMET',marker='x',color='blue',s =15,linewidth=1)
+plt.scatter(df2.gage_lon,df2.gage_lat,transform=ccrs.PlateCarree(),label='CSU',marker='+',color='fuchsia',s =15,linewidth=1)
+plt.scatter(df3.gage_lon,df3.gage_lat,transform=ccrs.PlateCarree(),label='CoAgMET',marker='*',color='blue',s =15,linewidth=1)
 #plt.scatter(df4.longitude,df4.latitude,transform=ccrs.PlateCarree(),label='ARS',marker='x',color='purple')
 
-legend = ax.legend()
+legend = ax.legend(fontsize=12)
 frame = legend.get_frame()
 frame.set_facecolor('white')
 frame.set_edgecolor('white')
@@ -94,6 +95,6 @@ frame.set_edgecolor('white')
 
 #plt.legend()
 
-fig.savefig("../output_figures/gage_map.pdf",
-           bbox_inches='tight',dpi=255,transparent=False,facecolor='white')
+fig.savefig("../output_figures/f01.pdf",
+           bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
 # %%
