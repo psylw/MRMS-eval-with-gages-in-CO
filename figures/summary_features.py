@@ -36,6 +36,8 @@ df = df.loc[(df.total_mrms_accum>1)].reset_index(drop=True)
 
 df = df.drop(columns=['start','storm_id'])
 
+
+#%%
 df_state=df_state.reindex(columns=df.drop(columns=['norm_diff']).columns)
 df_state = df_state.reset_index(drop=True)
 df_state.to_feather('../output/stateclean')

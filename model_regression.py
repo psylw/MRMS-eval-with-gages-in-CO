@@ -22,25 +22,14 @@ from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor, Ad
 from sklearn.model_selection import train_test_split,cross_validate,cross_val_predict,RandomizedSearchCV
 
 from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mean_squared_error
+sys.path.append('utils')
 from model_input import model_input
 
 df = pd.read_feather('output/train_test2')
 sys.path.append('output')
-sys.path.append('test')
+sys.path.append('test') 
 cv,test,train,X_train, X_test, y_train, y_test, all_permutations, plot = model_input(df)
 
-from gb_q_hyp import idx
-
-# %%
-'''max_corr=[]
-for i in range(len(all_permutations)):
-
-    pltcorr = df.drop(columns=['start','storm_id','norm_diff']).iloc[:,list(all_permutations[i])]
-
-    correlation_matrix = pltcorr.corr(method='spearman').abs()
-    max_corr.append(np.max(correlation_matrix.values[correlation_matrix.values < 1]))
-
-print(np.max(max_corr))'''
 
 # %%
 names = [
@@ -69,16 +58,13 @@ classifiers = [
     SVR()
 ]
 # %%
-# RANDOMLY SAMPLE UNCORRELATED FEATURES TO SEE WHICH PERFORMS BEST
-#SAMPLE_permutations = random.sample(all_permutations, 10)
+
 scores = []
 
 for name, clf in zip(names, classifiers):
     print(name)
-    #for idx,perm in enumerate(SAMPLE_permutations):
-    x = cross_validate(clf,X_train[:,all_permutations[idx]],y_train, cv = cv,
+    x = cross_validate(clf,X_train,y_train, cv = cv,
                     scoring=['r2','neg_mean_absolute_error','neg_mean_squared_error','neg_root_mean_squared_error'])
-    print(idx)
     print(x['test_r2'])
     print(x['test_neg_mean_absolute_error'])
     print(x['test_neg_mean_squared_error'])
@@ -94,7 +80,7 @@ for name, clf in zip(names, classifiers):
     print(x['test_neg_mean_squared_error'].std())
     print(x['test_neg_root_mean_squared_error'].std())
 
-    scores.append([name,idx,
+    scores.append([name,
                     x['test_r2'].mean(),
                     x['test_r2'].std(),
                     x['test_neg_mean_absolute_error'].mean(),
@@ -103,18 +89,11 @@ for name, clf in zip(names, classifiers):
                     x['test_neg_mean_squared_error'].std(),                                                                               x['test_neg_root_mean_squared_error'].mean(),
                     x['test_neg_root_mean_squared_error'].std()])
 
-scores = pd.DataFrame(scores,columns=['names','IDX',
+scores = pd.DataFrame(scores,columns=['names',
                             'test_r2_mean','test_r2_std',
                             'test_neg_mean_absolute_error_mean','test_neg_mean_absolute_error_std',
                             'test_neg_mean_squared_error_mean','test_neg_mean_squared_error_std',
                             'test_neg_root_mean_squared_error_mean','test_neg_root_mean_squared_error_std'])
-# %%
-# select optimal noncorrelated permutation per model
-model_perm = []
-for i in names:
-    model_perm.append([i,scores.loc[scores.names==i].sort_values('test_neg_mean_absolute_error_mean').IDX.iloc[-1]])
-
-model_perm = pd.DataFrame(data=model_perm,columns=['idx','name'])
 
 #%%
 # initial hyperparameter tuning
@@ -150,7 +129,7 @@ hyp = {}
 for name, clf, param in zip(names, classifiers, param):
     print(name)
     clf = clf
-    #idx = model_perm.loc[model_perm.idx==name].name.values[0]
+
     mod = RandomizedSearchCV(estimator=clf,
                        param_distributions = param,
                        n_iter=15, 
@@ -158,7 +137,7 @@ for name, clf, param in zip(names, classifiers, param):
                        refit='neg_mean_absolute_error',
                        cv=cv)
 
-    _ = mod.fit(X_train[:,all_permutations[idx]],y_train)  
+    _ = mod.fit(X_train,y_train)  
 
     hyp[name] = pd.DataFrame(mod.cv_results_).sort_values('rank_test_neg_mean_absolute_error')
 
@@ -194,22 +173,19 @@ names = [
 # %%
 # what do test results look like?
 #feature_names = train.drop(columns='norm_diff').columns
-
+results = []
 for name, clf in zip(names, classifiers):
     
     f, ax = plt.subplots(figsize=(6, 6))
-    clf.fit(X_train[:,all_permutations[idx]],y_train)
-    '''    mdi_importances = pd.Series(
-    clf.feature_importances_, index=feature_names).sort_values(ascending=True)
-    mdi_importances.plot.barh()
-    plt.show()'''
-    ypred = clf.predict(X_test[:,all_permutations[idx]])
+    clf.fit(X_train,y_train)
+
+    ypred = clf.predict(X_test)
 
     print(name)
     print(r2_score(y_test,ypred))
     print(mean_absolute_error(y_test,ypred))
     print(mean_squared_error(y_test,ypred))
-
+    results.append([name,round(r2_score(y_test,ypred),2),round(mean_absolute_error(y_test,ypred),2),round(mean_squared_error(y_test,ypred),2)])
     sns.scatterplot(x=y_test, y=ypred, s=5, color=".15")
     sns.histplot(x=y_test, y=ypred, bins=50, pthresh=.1, cmap="mako")
     sns.kdeplot(x=y_test, y=ypred, levels=5, color="w", linewidths=1)
@@ -219,43 +195,20 @@ for name, clf in zip(names, classifiers):
     plt.title(name)
     plt.show()
 
-
 # %%
-from sklearn.inspection import permutation_importance
-# compare train/test permutation feature importance for each model, look for consistency and overfitting
-param = {'learning_rate': 0.09318794343729946,
- 'max_depth': 6,
- 'max_features': None,
- 'min_samples_leaf': 10,
- 'min_samples_split': 5,
- 'n_estimators': 77,
- 'random_state': 781}
-
-clf = GradientBoostingRegressor(**param)
-clf.fit(X_train[:,SAMPLE_permutations[1]], y_train)
-
-train_result = permutation_importance(
-    clf, X_train[:,SAMPLE_permutations[1]], y_train, n_repeats=10, random_state=42, n_jobs=2, scoring='neg_mean_absolute_error'
-)
-test_results = permutation_importance(
-    clf, X_test[:,SAMPLE_permutations[1]], y_test, n_repeats=10, random_state=42, n_jobs=2,scoring='neg_mean_absolute_error'
-)
-sorted_importances_idx = train_result.importances_mean.argsort()
+clf = classifiers[2]
+name = names[2]
+clf.fit(X_train,y_train)
+ypred = clf.predict(X_test)
 #%%
-train_importances = pd.DataFrame(
-    train_result.importances[sorted_importances_idx].T,
-    columns=train.iloc[:,list(SAMPLE_permutations[1])].columns[sorted_importances_idx],
-)
-test_importances = pd.DataFrame(
-    test_results.importances[sorted_importances_idx].T,
-    columns=test.iloc[:,list(SAMPLE_permutations[1])].columns[sorted_importances_idx],
-)
-
-for name, importances in zip(["train", "test"], [train_importances, test_importances]):
-    ax = importances.plot.box(vert=False, whis=10)
-    ax.set_title(f"Permutation Importances ({name} set)")
-    ax.set_xlabel("Decrease in accuracy score")
-    ax.axvline(x=0, color="k", linestyle="--")
-    ax.figure.tight_layout()
-
+fig = plt.figure(figsize=(5,5))
+plt.scatter(y_test, ypred,marker='+')
+plt.plot([0,np.max(y_test)],[0,np.max(y_test)],color='red')
+plt.title(name,fontsize=12)
+plt.xlim(np.min(y_test),np.max(y_test))
+plt.ylim(np.min(y_test),np.max(y_test))
+plt.xlabel('true RMSE',fontsize=12 )
+plt.ylabel('predicted RMSE',fontsize=12)
+fig.savefig("output_figures/S2.pdf",
+       bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
 # %%
