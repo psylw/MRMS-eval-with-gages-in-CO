@@ -8,7 +8,7 @@ import cartopy.crs as ccrs
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
+import os
 # open window values and calculate proportion of samples from each coord
 df = pd.read_feather('../output/window_values_new')
 df = df.loc[df.total_mrms_accum>0].reset_index(drop=True)
@@ -22,6 +22,12 @@ df = df.loc[(df.total_mrms_accum>1)].reset_index(drop=True)
 
 source = df.groupby(['gage_lat','gage_lon']).agg(list).gage_source.reset_index()
 source['gage_source'] = [np.unique(source.iloc[i].gage_source)[0] for i in source.index]
+
+data_folder = os.path.join('..','..','data','precip_gage')
+# add mesowest
+meso_gages = pd.read_csv(data_folder+'\mesowest.csv')
+
+source.loc[(source.gage_lat.isin(meso_gages.lat)) & (source.gage_lon.isin(meso_gages.lon + 360)), 'gage_source'] = 'mesowest'
 #%%
 # Updated list of major cities in Colorado with their coordinates
 cities = {'City': ['Denver', 'Colorado Springs', 'Fort Collins', 'Grand Junction', 'pueblo'],
@@ -82,12 +88,14 @@ gl.right_labels=False # suppress right labels
 df1 = source.loc[source.gage_source=='usgs']
 df2 = source.loc[source.gage_source=='csu']
 df3 = source.loc[source.gage_source=='coagmet']
+df4 = source.loc[source.gage_source=='mesowest']
 plt.scatter(df1.gage_lon,df1.gage_lat,transform=ccrs.PlateCarree(),label='USGS',marker='x',color='darkred',s =15,linewidth=1)
 plt.scatter(df2.gage_lon,df2.gage_lat,transform=ccrs.PlateCarree(),label='CSU',marker='+',color='fuchsia',s =15,linewidth=1)
 plt.scatter(df3.gage_lon,df3.gage_lat,transform=ccrs.PlateCarree(),label='CoAgMET',marker='*',color='blue',s =15,linewidth=1)
+plt.scatter(df4.gage_lon,df4.gage_lat,transform=ccrs.PlateCarree(),label='MesoWest',marker='.',color='orange',s =20,linewidth=2)
 #plt.scatter(df4.longitude,df4.latitude,transform=ccrs.PlateCarree(),label='ARS',marker='x',color='purple')
 
-legend = ax.legend(fontsize=12)
+legend = ax.legend(fontsize=12,loc='upper left')
 frame = legend.get_frame()
 frame.set_facecolor('white')
 frame.set_edgecolor('white')
