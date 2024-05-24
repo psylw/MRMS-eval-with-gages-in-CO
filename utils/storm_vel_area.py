@@ -33,11 +33,11 @@ file_storm = file_storm
 #####################################################################################################################   CALCULATE VELOCITY FOR EACH STORM, DO THIS OUTSIDE
 
 #%%
-#for year in range(2018,2024):
-for year in range(2019,2020):
+for year in range(2018,2024):
+#for year in range(2019,2020):
     print(year)
-    #for month in ['may','jun','jul','aug','sep']:
-    for month in ['aug','sep']:
+    for month in ['may','jun','jul','aug','sep']:
+    #for month in ['aug','sep']:
         name_month = [s for s in file_storm if month in s and str(year) in s][0]
         print(name_month)
         s = pd.read_feather(name_month)

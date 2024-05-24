@@ -9,8 +9,8 @@ from metpy.plots import USCOUNTIES
 import cartopy.feature as cfeature
 import cartopy.crs as ccrs
 
-state = pd.read_feather('../output/stateclean')
-
+state = pd.read_feather('../output/stateclean_year')
+state = state[state.year>=2021]
 #%%
 # look at median
 med = state.groupby(['mrms_lat','mrms_lon']).median()['rqi_min']
@@ -28,8 +28,6 @@ plot_map2 = med_std
 name_cb2 = 'third quartile of RQI min'
 
 levels = list(np.arange(.1,.9,.1))
-
-#%%
 
 #%%
 import matplotlib.gridspec as gridspec
@@ -150,7 +148,7 @@ frame = legend.get_frame()
 frame.set_facecolor('white')
 frame.set_edgecolor('white')
 plt.tight_layout()
-
+#%%
 
 fig.savefig('../output_figures/f07.pdf',
            bbox_inches='tight',dpi=600,transparent=False,facecolor='white')

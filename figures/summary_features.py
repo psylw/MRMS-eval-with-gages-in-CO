@@ -19,10 +19,10 @@ from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mea
 
 
 df = pd.read_feather('../output/train_test2')
-
+df['year'] = [df.start[i].year for i in df.index]
 df_state = pd.read_feather('../output/state')
 df_state = df_state.loc[df_state.rqi_min>=0]
-
+df_state['year'] = [df_state.time[i].year for i in df_state.index]
 #%%
 df = df.dropna()
 df_state = df_state.dropna()
@@ -40,7 +40,8 @@ df = df.drop(columns=['start','storm_id'])
 #%%
 df_state=df_state.reindex(columns=df.drop(columns=['norm_diff']).columns)
 df_state = df_state.reset_index(drop=True)
-df_state.to_feather('../output/stateclean')
+#df_state.to_feather('../output/stateclean')
+df_state.to_feather('../output/stateclean_year')
 # %%
 for f in df_state.columns:
     #df_state[f].hist()

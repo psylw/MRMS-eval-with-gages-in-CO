@@ -21,14 +21,30 @@ from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mea
 sys.path.append('../utils')
 from model_input import model_input
 df = pd.read_feather('../output/train_test2')
+############################################################
+# experiments
+# add year
+df['year'] = [df.start[i].year for i in df.index]
+# train post v12
+#df = df[df.year>=2021]
+# other metrics
+#df = df.loc[df.total_mrms_accum>1].reset_index(drop=True)
+#df = df.dropna()
+#df['norm_diff'] = pd.read_feather('../output/mean_error')
 
+###########################################################
+
+#%%
 cv,test,train,X_train, X_test, y_train, y_test, all_permutations, plot = model_input(df)
 
 
 import sys
-sys.path.append('output')
-from gb_q_hyp import param,idx
+sys.path.append('../output')
 
+########################################### Select experiment hyperparameters ############
+#from gb_q_hyp_2021 import param,idx
+from gb_q_hyp_year import param,idx
+#from gb_q_hyp import param,idx
 # %%
 # plot correlation matrix of highest performing permutation
 
@@ -48,8 +64,7 @@ all_models = {}
 for alpha, p in zip([0.05, 0.5, 0.95],param):
     gbr_t = GradientBoostingRegressor(**p,loss="quantile", alpha=alpha)
     all_models["qgb_t %1.2f" % alpha] = gbr_t
-    #br = GradientBoostingRegressor(loss="quantile", alpha=alpha)
-    #all_models["qgb %1.2f" % alpha] = gbr'''
+
 for alpha in [0.05, 0.5, 0.95]:
     q = QuantileRegressor(quantile=alpha, solver='highs',alpha=0.02)
     all_models["qlin %1.2f" % alpha] = q
@@ -96,9 +111,14 @@ for name, gbr,a in zip(all_models.keys(),list(all_models.values()),[.05,.5,.95,.
 
 test_results = pd.DataFrame(test_results)
 test_results['truth'] = y_test
-test_results.to_feather('output/test_results')
+
+########################################### Select experiment ############
+#test_results.to_feather('../output/test_results_test')
+#test_results.to_feather('../output/test_results_2021')
+#test_results.to_feather('../output/test_results_mean_bias')
+test_results.to_feather('../output/test_results_year')
 #test_results=test_results.divide(test.max_mrms.values,axis=0)
-#%%
+
 
 # %%
 
@@ -107,6 +127,9 @@ print(round(len(test_results.loc[(test_results.truth>test_results['qgb_t 0.95'])
 print(round(len(test_results.loc[(test_results.truth>test_results['qlin 0.95'])|(test_results.truth<test_results['qlin 0.05'])])/len(test_results),3))
 
 # %%
+###########################
+# calculate fraction of outliers for each fold
+###########################
 train_results=[]
 for i in range(5):
     d={}
@@ -123,8 +146,6 @@ for i in range(5):
     d['truth'] = y_train[cv[i][1]] 
     d['cv'] = i
     train_results.append(d)
-
-# %%
 
 #%%
 cv_ci=[]

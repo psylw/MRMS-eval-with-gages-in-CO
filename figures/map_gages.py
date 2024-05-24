@@ -57,7 +57,7 @@ gs = gridspec.GridSpec(2, 1, height_ratios=[1, .02], bottom=.07, top=.99,
 
 plotcrs = ccrs.LambertConformal(central_latitude=(41.3+36.8)/2, central_longitude=(-109.2-103.5)/2)
 ax = plt.subplot(1,1,1, projection=plotcrs)
-ax.set_extent((-109.2, -103.5, 36.8, 41.3))
+
 
 elev=ax.contourf(lon,lat, noband, levels=list(range(2000, 5000, 500)), origin='upper',cmap='terrain', 
             alpha=0.4,transform=ccrs.PlateCarree())

@@ -18,22 +18,39 @@ from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mea
 sys.path.append('../utils')
 from model_input import model_input
 df = pd.read_feather('../output/train_test2')
+############################################################
+# experiments
+# add year
+df['year'] = [df.start[i].year for i in df.index]
+# train post v12
+#df = df[df.year>=2021]
+# other metrics
+#df = df.loc[df.total_mrms_accum>1].reset_index(drop=True)
+#df = df.dropna()
+#df['norm_diff'] = pd.read_feather('../output/mean_error')
+#%%
+###########################################################
 sys.path.append('../output')
 sys.path.append('../test')
 cv,test,train,X_train, X_test, y_train, y_test, all_permutations, plot = model_input(df)
 
-from gb_q_hyp import param, idx
+#from gb_q_hyp import param, idx
+#from gb_q_hyp_mean_bias import param,idx
+from gb_q_hyp_year import param,idx
 # %%
 # define untuned and tuned model
 all_models = {}
 for alpha, p in zip([0.05, 0.5, 0.95],param[0:3]):
     gbr_t = GradientBoostingRegressor(**p,loss="quantile", alpha=alpha)
     all_models["qgb_t %1.2f" % alpha] = gbr_t
-
-test_results = pd.read_feather('../output/test_results')
+test_results = pd.read_feather('../output/test_results_year')
+#test_results = pd.read_feather('../output/test_results_mean_bias')
+#test_results = pd.read_feather('../output/test_results_2021')
+#test_results = pd.read_feather('../output/test_results')
 test_results=test_results.divide(test.max_mrms.values,axis=0)
 # %%
-state = pd.read_feather('../output/stateclean')
+#state = pd.read_feather('../output/stateclean')
+state = pd.read_feather('../output/stateclean_year')
 
 scaler = StandardScaler()
 X_state = scaler.fit_transform(state)
@@ -45,7 +62,10 @@ for name, gbr,idx in zip(all_models.keys(),list(all_models.values()),[26,45,45])
     pred = gbr.predict(X_state[:,all_permutations[idx]])
     state_results[name]=pred
 state_results = pd.DataFrame(state_results)
-state_results.to_feather('../output/state_results')
+#state_results.to_feather('../output/state_results')
+#state_results.to_feather('../output/state_results_2021')
+#state_results.to_feather('../output/state_results_mb')
+state_results.to_feather('../output/state_results_year')
 state_results=state_results.divide(state.max_mrms.values,axis=0)
 
 # %%
@@ -99,6 +119,7 @@ axes[1].spines['right'].set_visible(False)
 axes[1].spines['left'].set_visible(False)
 axes[1].text(.05, 3, '(b)', fontsize=20)
 plt.tight_layout()
+#%%
 fig.savefig("../output_figures/f02.pdf",
        bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
 #%%

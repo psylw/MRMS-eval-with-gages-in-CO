@@ -19,11 +19,23 @@ sys.path.append('../utils')
 from model_input import model_input
 
 df = pd.read_feather('../output/train_test2')
+############################################################
+# experiments
+# add year
+#df['year'] = [df.start[i].year for i in df.index]
+# train post v12
+#df = df[df.year>=2021]
+# other metrics
+df = df.loc[df.total_mrms_accum>1].reset_index(drop=True)
+df = df.dropna()
+df['norm_diff'] = pd.read_feather('../output/mean_error')
+#%%
+###########################################################
 sys.path.append('../output')
 sys.path.append('../test')
 cv,test,train,X_train, X_test, y_train, y_test, all_permutations, plot = model_input(df)
 
-from gb_q_hyp import param, idx
+from gb_q_hyp_mean_bias import param, idx
 # %%
 # define untuned and tuned model
 all_models = {}

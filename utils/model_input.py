@@ -14,19 +14,20 @@ from sklearn.preprocessing import StandardScaler
 
 def model_input(df):
 
-
     df = df.dropna()
     #test = df.loc[df.norm_diff>70]
     #test.groupby(['start','mrms_lat','mrms_lon']).count()
     # this gage has most big outliers, see code above, remove it
     df = df.loc[(df.mrms_lat!=40.57499999999929)&(df.mrms_lon!=254.91499899999639)]
     
+    # remove samples where total accumulation less than 1
     df = df.loc[(df.total_mrms_accum>1)].reset_index(drop=True)
 
     df = df.drop(columns=['start','storm_id'])
 
 
     # %%
+    # group by location, keep same location in separate train/test and folds
     grouped = df.groupby(['mrms_lat','mrms_lon']).count().total_mrms_accum
     weights = 1.0 / grouped
 

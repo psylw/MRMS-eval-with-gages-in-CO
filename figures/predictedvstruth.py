@@ -2,8 +2,9 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-test_results = pd.read_feather('../output/test_results')
-
+#test_results = pd.read_feather('../output/test_results')
+#test_results = pd.read_feather('../output/test_results_2021')
+test_results = pd.read_feather('../output/test_results_mean_bias')
 
 fig = plt.figure(figsize=(10*.6, 8*.6))
 test_results = test_results.sort_values(by='qgb_t 0.50').reset_index(drop=True)

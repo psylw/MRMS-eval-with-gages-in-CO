@@ -9,8 +9,11 @@ from metpy.plots import USCOUNTIES
 import cartopy.feature as cfeature
 import cartopy.crs as ccrs
 
-state = pd.read_feather('../output/stateclean')
-state_results = pd.read_feather('../output/state_results')
+state = pd.read_feather('../output/stateclean_year')
+#state = pd.read_feather('../output/stateclean')
+#state_results = pd.read_feather('../output/state_results_mb')
+state_results = pd.read_feather('../output/state_results_year')
+#state_results = pd.read_feather('../output/state_results_2021')
 state_results=state_results.divide(state.max_mrms.values,axis=0)
 state['qgb_t 0.05'] = state_results['qgb_t 0.05'].values
 state['qgb_t 0.50'] = state_results['qgb_t 0.50'].values
@@ -50,8 +53,8 @@ y,x = med.mrms_lat,med.mrms_lon
 
 plot_map2 = med_std
 name_cb2 = 'first quartile of nRMSE prediction'
-levels = list(np.arange(0.3,0.8,.1))
-
+#levels = list(np.arange(0.3,0.8,.1))
+levels = list(np.arange(-.5,1,.2))
 #%%
 import matplotlib.gridspec as gridspec
 import cartopy.feature as cfeature

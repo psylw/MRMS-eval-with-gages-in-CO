@@ -12,8 +12,8 @@ import pandas as pd
 # get all coordinate files
 
 # get all rate files
-mrms_folder = os.path.join('..', '..','..',"MRMS","2min_rate_cat_month_CO")
-storm_folder = os.path.join('..', '..','..',"storm_stats")
+mrms_folder = os.path.join('..', '..','..',"data","MRMS","2min_rate_cat_month_CO")
+storm_folder = os.path.join('..', '..','..',"data","storm_stats")
 
 file_mrms = glob.glob(mrms_folder+'//'+'*.grib2')
 file_storm = glob.glob(storm_folder+'//'+'*_coord')
@@ -42,7 +42,7 @@ for year in range(2018,2024):
             index = s.iloc[storm]
             d = {'time':index.time,'latitude':index.latitude,'longitude':index.longitude}
             temp = pd.DataFrame(data=d)
-
+            temp['fill'] = 1
             temp = temp.groupby(['time','latitude','longitude']).max().to_xarray()
 
             m_storm = m.sel(time=temp.time,latitude=temp.latitude,longitude=temp.longitude)

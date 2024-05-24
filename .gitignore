@@ -108,3 +108,15 @@ output_figures/S1.pdf
 output_figures/S2.pdf
 utils/__pycache__/hyperparam.cpython-38.pyc
 
+output/mean_error
+output/state_results_2021
+output/state_results_mb
+output/state_results_year
+output/stateclean_year
+output/test_results_2021
+output/test_results_mean_bias
+output/test_results_year
+output/__pycache__/gb_q_hyp_2021.cpython-38.pyc
+output/__pycache__/gb_q_hyp_mean_bias.cpython-38.pyc
+output/__pycache__/gb_q_hyp_year.cpython-38.pyc
+utils/__pycache__/mean_error.cpython-38.pyc
