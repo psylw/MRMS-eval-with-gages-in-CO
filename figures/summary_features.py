@@ -40,7 +40,7 @@ df = df.drop(columns=['start','storm_id'])
 #%%
 df_state=df_state.reindex(columns=df.drop(columns=['norm_diff']).columns)
 df_state = df_state.reset_index(drop=True)
-#df_state.to_feather('../output/stateclean')
+df_state.to_feather('../output/stateclean')
 df_state.to_feather('../output/stateclean_year')
 # %%
 for f in df_state.columns:

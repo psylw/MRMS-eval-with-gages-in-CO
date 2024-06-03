@@ -13,37 +13,49 @@ train = train.dropna()
 
 
 # %%
-# calculate other error metrics
-import sys
-sys.path.append('../utils')
-from mean_error import me
-
 # nRMSE
 # mean bias
-window['mean_error'] = me(window)
+window['mean_error'] = pd.read_feather('../output/experiments/mean_error_values')
 
 #%%
 # how do metrics vary with year
 train['mean_error'] = window.mean_error
 train['year'] = [train.start[i].year for i in train.index]
-train['nrmse'] = (train.norm_diff/train.max_mrms).values
-train['nme'] = (train.mean_error/train.max_mrms).values
+train['nRMSE'] = (train.norm_diff/train.max_mrms).values
+train['nME'] = (train.mean_error/train.max_mrms).values
+
+train = train.rename(columns={'norm_diff':'RMSE'})
 #%%
-train = train.loc[train.total_mrms_accum>10].reset_index(drop=True)
+# define lat band
+q=[]
+for i in range(0,5):
+    q.append(train.quantile(.25*i).mrms_lon)
+
+train['long_band'] = pd.cut(train['mrms_lon'], bins=q, labels=list(range(1, 5)))
+
+q=[]
+for i in range(0,5):
+    q.append(train.quantile(.25*i).mrms_lat)
+
+train['lat_band'] = pd.cut(train['mrms_lat'], bins=q, labels=list(range(1, 5)))
+
 #%%
-sns.boxplot(data = train,x='year',y='mean_error')
-plt.ylim(-10,10)
+#train_10 = train.loc[train.total_mrms_accum>10].reset_index(drop=True)
+#%%
+sns.boxplot(data = train,x='year',y='mean_error', hue='month')
+plt.ylim(-1,2)
 plt.show()
-sns.boxplot(data = train,x='year',y='norm_diff')
+sns.boxplot(data = train,x='year',y='norm_diff', hue='month')
 plt.ylim(0,10)
 plt.show()
-sns.boxplot(data = train,x='year',y='rqi_mean')
+sns.boxplot(data = train,x='year',y='rqi_mean', hue='month')
 plt.show()
-sns.boxplot(data = train,x='year',y='nrmse')
+sns.boxplot(data = train,x='year',y='nrmse', hue='month')
 plt.ylim(0,1)
 plt.show()
-sns.boxplot(data = train,x='year',y='nme')
-plt.ylim(-.5,.5)
+sns.boxplot(data = train,x='year',y='nme', hue='month')
+plt.ylim(-.5,1)
+plt.legend(loc='upper right')
 plt.show()
 # how do metrics vary with month
 # %%

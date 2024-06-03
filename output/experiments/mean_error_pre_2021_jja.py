@@ -1,0 +1,2 @@
+param = [{'learning_rate': 0.02267184044357601, 'max_depth': 4, 'min_samples_leaf': 17, 'min_samples_split': 9, 'n_estimators': 212, 'random_state': 418}, {'learning_rate': 0.15819026782864756, 'max_depth': 4, 'min_samples_leaf': 9, 'min_samples_split': 6, 'n_estimators': 100, 'random_state': 233}, {'learning_rate': 0.16602818815699488, 'max_depth': 2, 'min_samples_leaf': 4, 'min_samples_split': 19, 'n_estimators': 153, 'random_state': 387}]
+idx = 170
