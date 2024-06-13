@@ -9,9 +9,25 @@ from metpy.plots import USCOUNTIES
 import cartopy.feature as cfeature
 import cartopy.crs as ccrs
 
-def map_results(state, levels,plot_name):
+def map_results(state, state_results,plot_name):
+    if 'nr_rmse' in plot_name:
+        input_state_results=state_results
+        levels = list(np.arange(0.3,0.8,.1))
+        label1 = 'median of nRMSE prediction'
+        label2 = 'first quartile of nRMSE prediction'
+    elif 'mean_error' in plot_name:
+        input_state_results=state_results
+        levels = list(np.arange(.25,2,.25))
+        label1 = 'median of ME prediction'
+        label2 = 'first quartile of ME prediction'
 
+    else:
+        input_state_results=state_results.divide(state.max_mrms.values,axis=0)
+        levels = list(np.arange(0.3,0.8,.1))
+        label1 = 'median of nRMSE prediction'
+        label2 = 'first quartile of nRMSE prediction'
 
+    state = pd.concat([state.reset_index(drop=True),input_state_results],axis=1)
 
     #%%
     # look at median
@@ -41,11 +57,11 @@ def map_results(state, levels,plot_name):
     #%%
     #tell plotter what to plot
     plot_map = med
-    name_cb = 'median of nRMSE prediction'
+    name_cb = label1
     y,x = med.mrms_lat,med.mrms_lon
 
     plot_map2 = med_std
-    name_cb2 = 'first quartile of nRMSE prediction'
+    name_cb2 = label2
     
     #levels = list(np.arange(-.5,1,.2))
     #%%
@@ -105,6 +121,7 @@ def map_results(state, levels,plot_name):
     cb =plt.colorbar(elev, orientation="horizontal", shrink=.5,pad=0.01,ax=axs[0])
     cb.ax.tick_params(labelsize=10)
     cb.set_label(name_cb, fontsize=12)
+    cb.set_ticks(np.round(cb.get_ticks(), decimals=1))
 
     axs[0].scatter(cities_df.longitude,cities_df.latitude,
             transform=ccrs.PlateCarree(),s = 25, facecolors='red',edgecolors='black',marker='^',label='city')
@@ -160,6 +177,7 @@ def map_results(state, levels,plot_name):
     cb =plt.colorbar(elev, orientation="horizontal", shrink=.5,pad=0.01,ax=axs[1])
     cb.ax.tick_params(labelsize=10)
     cb.set_label(name_cb2, fontsize=12)
+    cb.set_ticks(np.round(cb.get_ticks(), decimals=1))
 
     axs[1].scatter(cities_df.longitude,cities_df.latitude,
             transform=ccrs.PlateCarree(),s = 25, facecolors='red',edgecolors='black',marker='^',label='city')
@@ -195,11 +213,11 @@ def map_results(state, levels,plot_name):
     frame.set_edgecolor('white')
     plt.subplots_adjust(wspace=0.001)
     plt.tight_layout()
-    fig.suptitle(plot_name, fontsize=16)
+    #fig.suptitle(plot_name, fontsize=16)
     plt.show()
     #%%
 
     #fig.savefig('../output_figures/f03.pdf',bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
     
-    fig.savefig("../output/experiments/figures/f03"+plot_name+".png",bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
+    fig.savefig("../output_figures/experiments/f03"+plot_name+".pdf",bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
 # %%

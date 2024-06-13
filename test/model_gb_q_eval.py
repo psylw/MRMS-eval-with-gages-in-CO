@@ -37,22 +37,22 @@ from experiments2 import *
 
 # select which experiments to run
 experiments = [
-    #original,
-    #pre_2021,
-    #post_2021,
-    #jja,
-    #pre_2021_jja,
-    #post_2021_jja,
-    #add_year_as_feature,
-    nr_rmse,
-    nr_rmse_pre,
-    nr_rmse_post,
-    mean_error,
-    mean_error_pre,
-    mean_error_post,
-    mean_error_pre_2021_jja,
-    mean_error_post_2021_jja,
-    mean_error_year
+    original,
+    pre_2021,
+    post_2021,
+    jja,
+    pre_2021_jja,
+    post_2021_jja,
+    add_year_as_feature,
+    #nr_rmse,
+    #nr_rmse_pre,
+    #nr_rmse_post,
+    #mean_error,
+    #mean_error_pre,
+    #mean_error_post,
+    #mean_error_pre_2021_jja,
+    #mean_error_post_2021_jja,
+    #mean_error_year
 ]
 
 # define loss
@@ -181,7 +181,7 @@ for idx, exp in enumerate(experiments):
 
     ##################################################
     # get state results
-
+    
     scaler = StandardScaler()
     X_state = scaler.fit_transform(state)
 

@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split,cross_validate,cross_val_pr
 
 from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mean_squared_error,mean_pinball_loss
 
-def perm_imp(idx,param,train,X_train, X_test, y_train, y_test, all_permutations,plot_name):
+def perm_imp(idx,param,train,X_train, X_test, y_train, y_test, all_permutations,plot_name,fig_idx):
 
     # define untuned and tuned model
     all_models = {}
@@ -35,8 +35,8 @@ def perm_imp(idx,param,train,X_train, X_test, y_train, y_test, all_permutations,
     'rqi_std': 'RQI std dev', 
     'max_mrms': 'max intensity',
     'max_accum_atgage': 'max accum',
-    'median_int_point': 'median intensity',
-    'std_int_point': 'std dev intensity',
+    'median_int_point': 'median int',
+    'std_int_point': 'std dev int',
     'var_int_point': 'var intensity',
     'mean_int_point': 'mean intensity',
     'median_accum_point': 'median accum',
@@ -46,14 +46,14 @@ def perm_imp(idx,param,train,X_train, X_test, y_train, y_test, all_permutations,
     'point_elev': 'elevation',
     'point_slope': 'slope',
     'point_aspect': 'aspect',
-    'temp_var_accum': 'storm temporal var',
+    'temp_var_accum': 'storm temp var',
     'spatial_var_accum': 'storm spatial var',
     }
-
-    corr = ['total_mrms_accum', 'max_mrms',
+    '''    corr = ['total_mrms_accum', 'max_mrms',
        'max_accum_atgage', 'std_int_point',
        'var_int_point',
-       'std_accum_point', 'var_accum_point']
+       'std_accum_point', 'var_accum_point']'''
+
     # %%
 
     from sklearn.inspection import permutation_importance
@@ -83,9 +83,9 @@ def perm_imp(idx,param,train,X_train, X_test, y_train, y_test, all_permutations,
             columns=train.drop(columns='norm_diff').iloc[:,list(all_permutations[idx])].columns[sorted_importances_idx_test]
         )
 
-        importances_train = importances_train.drop(columns=corr,errors='ignore')
+        #importances_train = importances_train.drop(columns=corr,errors='ignore')
         importances_train = importances_train.rename(columns=readable_names)
-        importances_test = importances_test.drop(columns=corr,errors='ignore')
+        #importances_test = importances_test.drop(columns=corr,errors='ignore')
         importances_test = importances_test.rename(columns=readable_names)
         importances_train = importances_train.T.stack().reset_index().drop(columns='level_1').rename(columns={'level_0':'feature',0:'pi'})
         importances_train['model'] = name
@@ -114,8 +114,8 @@ def perm_imp(idx,param,train,X_train, X_test, y_train, y_test, all_permutations,
     axes[0].grid(True)
     axes[0].spines['top'].set_visible(False)
     axes[0].spines['right'].set_visible(False)
-    desired_y_ticks = [0, .025, .05, .075,.1]  # Replace with your desired values
-    axes[0].set_yticks(desired_y_ticks,fontsize=12)
+    #desired_y_ticks = [0, .025, .05, .075,.1]  # Replace with your desired values
+    #axes[0].set_yticks(desired_y_ticks,fontsize=12)
 
     # Subplot 2
 
@@ -149,10 +149,10 @@ def perm_imp(idx,param,train,X_train, X_test, y_train, y_test, all_permutations,
     # Show the plot
     fig.text(0.07, 0.5, 'increase in mean (QL)', va='center', rotation='vertical',fontsize=12)
     plt.subplots_adjust(wspace=0.06, hspace=0.02)
-    fig.suptitle(plot_name, fontsize=16)
+    #fig.suptitle(plot_name, fontsize=16)
     plt.show()
     #%%
     #fig.savefig("../output_figures/f04.pdf",bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
     
-    fig.savefig("../output/experiments/figures/f04"+plot_name+".png",bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
+    fig.savefig("../output_figures/experiments/S"+str(fig_idx)+".pdf",bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
     # %%

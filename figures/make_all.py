@@ -21,7 +21,7 @@ from experiments2 import *
 # select which experiments to run
 experiments = [
     #original,
-    #pre_2021,
+    pre_2021,
     #post_2021,
     #jja,
     #pre_2021_jja,
@@ -30,12 +30,12 @@ experiments = [
     #nr_rmse,
     #nr_rmse_pre,
     #nr_rmse_post,
-    mean_error,
-    mean_error_pre,
-    mean_error_post,
-    mean_error_pre_2021_jja,
-    mean_error_post_2021_jja,
-    mean_error_year
+    #mean_error,
+    #mean_error_pre,
+    #mean_error_post,
+    #mean_error_pre_2021_jja,
+    #mean_error_post_2021_jja,
+    #mean_error_year
 ]
 
 # import figure functions
@@ -48,6 +48,7 @@ from predictedvstruth import predictedvstruth
 
 
 #%%
+fig_idx = 7
 for idx, exp in enumerate(experiments):
     print(idx/len(experiments))
     file_name = exp.__name__ 
@@ -62,28 +63,20 @@ for idx, exp in enumerate(experiments):
     
     state_results = pd.read_feather('../output/experiments/state_results_'+file_name)
 
-    hist_rmse(test_results,state_results,train,test,state, file_name)
-    '''    if 'nr_rmse' in file_name:
-        input_state_results=state_results
-
-    else:
-        input_state_results=state_results.divide(state.max_mrms.values,axis=0)
-    
-    if 'mean_error' in file_name:
-        levels = list(np.arange(-.25,.5,.1))
-    else:
-        levels = list(np.arange(0.1,0.9,.1))
-
-    state_merge = pd.concat([state.reset_index(drop=True),input_state_results],axis=1)
-    map_results(state_merge, levels,file_name)
+    hist_rmse(test_results,state_results,train,test,state, file_name,fig_idx)
+    #fig_idx+=1
+    #map_results(state, state_results,file_name)
 
     param = importlib.import_module(file_name).param
     idx = importlib.import_module(file_name).idx
-    perm_imp(idx,param,train,X_train, X_test, y_train, y_test, all_permutations,file_name)
+    #perm_imp(idx,param,train,X_train, X_test, y_train, y_test, all_permutations,file_name,fig_idx)
+    #fig_idx+=1
+    #feature_boxplot(idx,state,state_results,train, all_permutations,file_name,fig_idx)
+    #fig_idx+=1
+    #predictedvstruth(test_results,file_name,fig_idx)
 
-    feature_boxplot(idx,state,state_results,train, all_permutations,file_name)
+    fig_idx+=5
 
-    predictedvstruth(test_results,file_name)'''
 
 
 

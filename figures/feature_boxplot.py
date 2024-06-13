@@ -17,7 +17,8 @@ from sklearn.model_selection import train_test_split,cross_validate,cross_val_pr
 
 from sklearn.metrics import  mean_absolute_error,r2_score,mean_pinball_loss, mean_squared_error,mean_pinball_loss
 
-def feature_boxplot(idx,state,state_results,train, all_permutations,plot_name):
+def feature_boxplot(idx,state,state_results,train, all_permutations,plot_name,fig_idx):
+
        state = state.copy()
        state['qgb_t 0.50'] = state_results['qgb_t 0.50'].values
        readable_names = {
@@ -31,8 +32,8 @@ def feature_boxplot(idx,state,state_results,train, all_permutations,plot_name):
        'rqi_std': 'RQI std dev', 
        'max_mrms': 'max intensity',
        'max_accum_atgage': 'max accum',
-       'median_int_point': 'median intensity',
-       'std_int_point': 'std dev intensity',
+       'median_int_point': 'intensity median',
+       'std_int_point': 'intensity std dev',
        'var_int_point': 'var intensity',
        'mean_int_point': 'mean intensity',
        'median_accum_point': 'median accum',
@@ -42,7 +43,7 @@ def feature_boxplot(idx,state,state_results,train, all_permutations,plot_name):
        'point_elev': 'elevation',
        'point_slope': 'slope',
        'point_aspect': 'aspect',
-       'temp_var_accum': 'storm temporal var',
+       'temp_var_accum': 'storm temp var',
        'spatial_var_accum': 'storm spatial var',
        }
        state = state.rename(columns=readable_names)
@@ -64,7 +65,7 @@ def feature_boxplot(idx,state,state_results,train, all_permutations,plot_name):
 
 
        #%%
-       fig, axs = plt.subplots(2,5, figsize=(14*.85,5*.85), facecolor='w', edgecolor='k',sharex=True)
+       fig, axs = plt.subplots(2,5, figsize=(14*.75,5*.85), facecolor='w', edgecolor='k',sharex=True)
        fig.subplots_adjust(hspace = .18, wspace=.4)
 
        axs = axs.ravel()
@@ -80,8 +81,8 @@ def feature_boxplot(idx,state,state_results,train, all_permutations,plot_name):
        'RQI std dev' : False, 
        'max intensity' : True,
        'max accum' : True,
-       'median intensity' : True,
-       'std dev intensity' : False,
+       'intensity median' : True,
+       'intensity std dev' : False,
        'var intensity' : False,
        'mean intensity' : True,
        'median accum' : True,
@@ -91,34 +92,39 @@ def feature_boxplot(idx,state,state_results,train, all_permutations,plot_name):
        'elevation' : False,
        'slope' : False,
        'aspect' : False,
-       'storm temporal var' : False,
+       'storm temp var' : False,
        'storm spatial var' : False,
        'duration' : False,
        'month' : False,
        'hour' : False,
        'velocity' : False,
-       'area' : False
+       'area' : True
        }
 
        columns = train.drop(columns='norm_diff').iloc[:,list(all_permutations[idx])].rename(columns=readable_names)
 
        columns = columns.drop(columns=['month','hour','year'], errors='ignore').columns
-
+       flierprops = dict(marker='o', markerfacecolor='r', markersize=4, linestyle='none')
        for i,col in enumerate(columns):
               d = [state_good[col],state_bad[col]]
 
-              axs[i].boxplot(d)
+              axs[i].boxplot(d, flierprops=flierprops, patch_artist=True, 
+              boxprops=dict(facecolor='lightblue', color='blue'),
+              medianprops=dict(color='red', linewidth=2),
+              whiskerprops=dict(color='blue', linewidth=1.5),
+              capprops=dict(color='blue', linewidth=1.5))
               
               axs[i].set_xticks([1,2],labels=['low',
                                                  'high'],rotation=45,fontsize=12)
               #axs[i].set_yticks(fontsize=12)
               axs[i].set_title(col,fontsize=12)
-              
+              axs[i].grid(True, linestyle='--', linewidth=0.5, axis='y')
               if make_log[col] == True:
                      axs[i].set_yscale('log')
 
        #%% 29 columns
-       fig.suptitle(plot_name, fontsize=16)
+       #fig.suptitle(plot_name, fontsize=16)
        #fig.savefig("../output_figures/f05.pdf",bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
-       fig.savefig("../output/experiments/figures/f05"+plot_name+".png",bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
+       plt.tight_layout()
+       fig.savefig("../output_figures/experiments/S"+str(fig_idx)+".pdf",bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
 # %%

@@ -9,8 +9,8 @@ from metpy.plots import USCOUNTIES
 import cartopy.feature as cfeature
 import cartopy.crs as ccrs
 
-state = pd.read_feather('../output/stateclean_year')
-state = state[state.year>=2021]
+state = pd.read_feather('../output/experiments/stateclean_year')
+#state = state[state.year>=2021]
 #%%
 # look at median
 med = state.groupby(['mrms_lat','mrms_lon']).median()['rqi_min']
@@ -150,7 +150,7 @@ frame.set_edgecolor('white')
 plt.tight_layout()
 #%%
 
-fig.savefig('../output_figures/f07.pdf',
-           bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
+#fig.savefig('../output_figures/f07.pdf',
+           #bbox_inches='tight',dpi=600,transparent=False,facecolor='white')
 
 # %%
