@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-def predictedvstruth(test,test_results, plot_name,fig_idx):
+def predictedvstruth(test_results, plot_name,fig_idx):
        if 'nr_rmse' in plot_name:
               ax_name2 = 'normalized RMSE'
               ax_name3 = 'predicted nRMSE'
@@ -36,7 +36,7 @@ def predictedvstruth(test,test_results, plot_name,fig_idx):
        #sns.kdeplot(x=test_results['qgb_t 0.50'], y=test_results['truth'], levels=5, color="red", linewidths=1)
        plt.xlabel(ax_name3)
        plt.ylabel(ax_name2)
-       plt.xlim(test_results['qgb_t 0.50'].min(),test_results['qgb_t 0.50'].max())
+       plt.xlim(-5,20)
        plt.ylim(test_results['truth'].min(),test_results['truth'].max())
        plt.plot([0,100],[0,100],'k--')
        plt.gca().spines['top'].set_visible(False)

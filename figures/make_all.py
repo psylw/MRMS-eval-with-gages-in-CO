@@ -21,7 +21,7 @@ from experiments2 import *
 # select which experiments to run
 experiments = [
     #original,
-    pre_2021,
+    #pre_2021,
     #post_2021,
     #jja,
     #pre_2021_jja,
@@ -30,7 +30,7 @@ experiments = [
     #nr_rmse,
     #nr_rmse_pre,
     #nr_rmse_post,
-    #mean_error,
+    mean_error,
     #mean_error_pre,
     #mean_error_post,
     #mean_error_pre_2021_jja,
@@ -40,10 +40,10 @@ experiments = [
 
 # import figure functions
 sys.path.append('figures')
-from hist_rmse import hist_rmse
-from map_results import map_results
-from perm_imp import perm_imp
-from feature_boxplot import feature_boxplot
+#from hist_rmse import hist_rmse
+#from map_results import map_results
+#from perm_imp import perm_imp
+#from feature_boxplot import feature_boxplot
 from predictedvstruth import predictedvstruth
 
 
@@ -63,7 +63,7 @@ for idx, exp in enumerate(experiments):
     
     state_results = pd.read_feather('../output/experiments/state_results_'+file_name)
 
-    hist_rmse(test_results,state_results,train,test,state, file_name,fig_idx)
+    #hist_rmse(test_results,state_results,train,test,state, file_name,fig_idx)
     #fig_idx+=1
     #map_results(state, state_results,file_name)
 
@@ -73,7 +73,7 @@ for idx, exp in enumerate(experiments):
     #fig_idx+=1
     #feature_boxplot(idx,state,state_results,train, all_permutations,file_name,fig_idx)
     #fig_idx+=1
-    #predictedvstruth(test_results,file_name,fig_idx)
+    predictedvstruth(test_results,file_name,fig_idx)
 
     fig_idx+=5
 
